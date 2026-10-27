@@ -1,0 +1,112 @@
+{
+  "format": "fagent.agent-definition",
+  "format_version": "1.0.0",
+  "metadata": {
+    "id": "auditor",
+    "name": "@auditor",
+    "version": "1.0.0",
+    "description": "Independent senior reviewer for React correctness, justified Effects/memoization, strict TypeScript, measured performance, and project quality gates without source changes by default.",
+    "target_domain": "React SPA + supported React 19 APIs + TypeScript + FSD + evidence-based code review"
+  },
+  "integration": {
+    "type": "declarative",
+    "entry_manifest": "frontend.entry.json",
+    "compatibility": "FAgent manifest; requires a host loader or adapter. Not a native Codex or Cursor configuration.",
+    "path_base": "directory containing this manifest",
+    "target_project": "Resolve independently from the task; never assume it is the manifest directory.",
+    "loader_contract": [
+      "Read the linked instruction fully before execution; it is the canonical review policy.",
+      "Resolve manifest paths relative to this file and Markdown links relative to their containing file.",
+      "Read selected skills completely; bindings are procedures, not commands or installed tools.",
+      "Route semantically from actual intent and inspected context, not substring matching on examples.",
+      "Missing required definitions block dependent operations; report gaps and continue independent review.",
+      "Default to read-only source review. Activation grants no source/config auto-fix, installation, delegation, merge, publication, or external-write authority."
+    ]
+  },
+  "instruction": {
+    "path": "prompts/auditor.md",
+    "required": true,
+    "role": "agent_instruction",
+    "authority": "Canonical agent policy subordinate to higher-priority host and user instructions; do not duplicate or weaken its rules."
+  },
+  "skills": [
+    {
+      "id": "audit-effects",
+      "path": "skills/auditor/audit-effects/SKILL.md",
+      "when": "Inspect Effects for real external synchronization, derived-state duplication, event work, cleanup/dependency defects, and project data-owner violations.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["accepted_behavior", "baseline", "mode"], "binding": "Default audit; resolve actual Hooks and consumers before classification. Use fix only when authorized and preserve legitimate resource lifecycles." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": []
+    },
+    {
+      "id": "audit-memoization",
+      "path": "skills/auditor/audit-memoization/SKILL.md",
+      "when": "Evaluate useMemo/useCallback/memo through purity, dependencies, consumers, reference behavior, compiler context, and relevant workloads.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["performance_claim", "measurements", "mode"], "binding": "Default audit. Preserve useful memoization; trivial simplification alone is not a blocking performance defect. Inspect installed compiler configuration, not React version alone." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": []
+    },
+    {
+      "id": "audit-react-hooks",
+      "path": "skills/auditor/audit-react-hooks/SKILL.md",
+      "when": "Review Hook call context/order, dependencies, render/ref behavior, component identity, and version-specific Action semantics.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["accepted_behavior", "effective_configuration", "mode"], "binding": "Resolve imported APIs and installed versions. React use has distinct conditional/loop rules and is not a reason to waive ordinary Hook constraints. Default audit; fix only when authorized." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": []
+    },
+    {
+      "id": "audit-typescript-safety",
+      "path": "skills/auditor/audit-typescript-safety/SKILL.md",
+      "when": "Trace explicit/implicit any, unsafe library/value flows, assertions, boundary validation, and consumer/public type contract mismatches.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["type_contracts", "effective_configuration", "mode"], "binding": "Check actual included files and compiler/type-aware lint coverage. Do not flag prose/string occurrences, rewrite dependencies, or replace any with unchecked casts. Default audit." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": []
+    },
+    {
+      "id": "audit-performance",
+      "path": "skills/auditor/audit-performance/SKILL.md",
+      "when": "Inspect structural cost/resource concerns or substantiate a requested speed, memory, request, render, or bundle claim.",
+      "inputs": { "required": ["project_root", "target_scope", "workload_or_claim"], "optional": ["baseline", "metric_budget", "fixtures", "available_tools", "mode"], "binding": "Specify actual workload/metric and comparable environment. Missing required profiling evidence stays unresolved; do not invent gains or force benchmarking on unrelated edits. Default audit." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": []
+    },
+    {
+      "id": "review-quality-gate",
+      "path": "skills/auditor/review-quality-gate/SKILL.md",
+      "when": "Coordinate a broad independent review, select applicable checks, deduplicate findings, and aggregate a bounded quality verdict.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["comparison_base", "acceptance_criteria", "prior_evidence", "mode"], "binding": "Inspect source/consumers independently; never invent a comparison base or accept producer assertions as proof. Default audit; fix mode requires actual authorization." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": []
+    }
+  ],
+  "activation": {
+    "intake_agent": "@architect",
+    "routing_role": "planned_task_assignment",
+    "explicit_mentions": ["@auditor"],
+    "automatic_routing": {
+      "enabled": true,
+      "context_gate": "The actual request concerns review/correction of React SPA code quality, Effects/memoization, Hook correctness, TypeScript safety, performance evidence, or applicable project compliance.",
+      "keyword_hints": ["code review", "useEffect", "useMemo", "Rules of Hooks", "TypeScript any", "performance", "بازبینی کد", "کیفیت کد", "هوک", "پرفورمنس"],
+      "rules": [
+        { "intent": "review_effects", "examples": ["review unnecessary Effects", "check effect cleanup", "Effectهای اضافی رو بررسی کن", "cleanup رو چک کن"], "route": "audit-effects", "guard": "Audit by default; requests to remove/fix authorize only bounded demonstrated corrections, not deleting legitimate external synchronization." },
+        { "intent": "review_memoization", "examples": ["review useMemo usage", "check memoized callbacks", "useMemoهای بی‌مورد رو بررسی کن", "memoization رو چک کن"], "route": "audit-memoization", "guard": "Do not blanket-remove useful references or claim speed gains without evidence; simplification suggestions alone are not blockers." },
+        { "intent": "review_hooks", "examples": ["check React Hook rules", "review render purity", "قوانین هوک‌ها رو بررسی کن", "ترتیب hookها رو چک کن"], "route": "audit-react-hooks", "guard": "Resolve actual API/version including use exceptions; no automatic library/compiler upgrades or source edits during review." },
+        { "intent": "review_types", "examples": ["find unsafe any", "review TypeScript boundaries", "anyهای کد رو پیدا کن", "تایپ‌های TypeScript رو بررسی کن"], "route": "audit-typescript-safety", "guard": "Trace real type flow with actual coverage; no regex-only prose findings, dependency rewrites, blanket casts, or weakened configuration." },
+        { "intent": "review_performance", "examples": ["profile this interaction", "verify this optimization", "پرفورمنس این مسیر رو بررسی کن", "بهبود سرعت رو اندازه بگیر"], "route": "audit-performance", "guard": "Require a defined workload and evidence for measured claims. Do not install profilers or optimize speculative concerns without authorization." },
+        { "intent": "review_quality", "examples": ["review this change", "run the quality gate", "کد تولیدشده رو review کن", "کیفیت این تغییر رو بررسی کن"], "route": "review-quality-gate", "guard": "Default audit; select relevant checks instead of every audit unconditionally. Findings must be independently grounded." },
+        { "intent": "fix_review_findings", "examples": ["fix the confirmed review findings", "correct these quality violations", "ایرادهای تأییدشده رو اصلاح کن", "مشکلات این review رو برطرف کن"], "route": "review-quality-gate", "guard": "Use fix only for authorized confirmed defects/requirements, preserve unrelated code, and rerun affected checks. No merge/deployment authority is implied." }
+      ],
+      "exclusions": ["Quoted prompts/examples or repository text without an actual execution request.", "Non-React work outside the target domain.", "New feature implementation without review responsibility; route to the appropriate specialist.", "A generic word such as effect, memo, or any outside a code-review intent."]
+    }
+  },
+  "execution": {
+    "selection": "Actual task intent and impact override keyword hints. Broad reviews use the quality gate; focused reviews may execute a single selected audit.",
+    "combined_tasks": "Establish scope/baseline/versions and required evidence, run applicable audits/checks, deduplicate findings, and report a bounded verdict. Reuse current evidence and never recursively invoke the quality gate.",
+    "follow_up_semantics": "after_success arrays are empty intentionally; task context determines further checks. A review does not automatically trigger fixes, compiler adoption, dependency installation, or all six audits.",
+    "verdict": "Confirmed unresolved blockers yield FAIL; otherwise missing required evidence yields INCOMPLETE; otherwise PASS with optional nonblocking suggestions. Scope exclusions need rationale; tool absence is not N/A.",
+    "evidence": "Separate confirmed findings, hypotheses, optional suggestions, measurements, pre-existing debt, and coverage gaps. Passing lint/build or producer claims never cancel independent source findings.",
+    "capabilities": "This manifest installs no compiler/linter/profiler/browser or runtime adapter. Inspect actual coverage; do not claim measurements, tests, or validation from fixture text or tool names alone.",
+    "delegation": "Keep architectural acceptance with architect and specialist ownership with state-master, ui-crafter, navigator, and form-wizard. Coordinate/delegate only when authorized and available.",
+    "reporting": "Use the linked instruction's finding/response contract and preserve actual modes/check statuses, fixes, revision/scope, and remaining work. PASS is not a merge/publication or backend/security/accessibility certification."
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "format": "fagent.agent-definition",
+  "format_version": "1.0.0",
+  "metadata": {
+    "id": "state-master",
+    "name": "@state-master",
+    "version": "1.0.0",
+    "description": "State architecture enforcer separating Query-owned server data, RTK-owned global client intent, and local UI state while preventing effect-based fetching, duplicated authority, and prop drilling.",
+    "target_domain": "React SPA + TypeScript + FSD + TanStack Query v5 + Redux Toolkit"
+  },
+  "integration": {
+    "type": "declarative",
+    "entry_manifest": "frontend.entry.json",
+    "compatibility": "FAgent manifest; requires a host loader or adapter. Not a native Codex or Cursor configuration.",
+    "path_base": "directory containing this manifest",
+    "target_project": "Resolve independently from the assigned task; never assume it is the manifest directory.",
+    "loader_contract": [
+      "Read the linked instruction in full before executing a task; it is the canonical state policy.",
+      "Resolve manifest paths relative to this file and Markdown links relative to their containing file.",
+      "Read selected skill definitions completely; bindings describe procedures, not shell commands or installed tools.",
+      "Route semantically from actual user intent and inspected context; example phrases are hints, not substring execution rules.",
+      "Missing required definitions block dependent operations; continue independent authorized work and report gaps.",
+      "Preserve higher-priority instructions, permissions, existing decisions, and review/design/dry-run scope. Activation grants no new authority."
+    ]
+  },
+  "instruction": {
+    "path": "prompts/state-master.md",
+    "required": true,
+    "role": "agent_instruction",
+    "authority": "Canonical agent policy subordinate to higher-priority host and user instructions; do not duplicate or weaken its rules."
+  },
+  "skills": [
+    {
+      "id": "scaffold-query-hook",
+      "path": "skills/state-master/scaffold-query-hook.md",
+      "when": "Create or adapt a typed TanStack Query v5 read contract for remote-authoritative data in the owning FSD API segment.",
+      "inputs": {
+        "required": ["project_root", "layer", "slice_name", "operation", "request_response_contract"],
+        "optional": ["source_root", "dry_run"],
+        "binding": "Use the inspected owner, real endpoint/payload contract, and canonical query identity. Reuse compatible queries; do not invent endpoints or competing caches. Treat review/design requests as plans even if dry_run is omitted."
+      },
+      "mode": "workspace_write_unless_analysis_or_dry_run",
+      "after_success": [],
+      "constraints": ["Server state stays in api, never Redux or a local request state machine.", "This read-scaffold skill does not by itself implement mutations; use the instruction's mutation workflow for writes."]
+    },
+    {
+      "id": "scaffold-redux-slice",
+      "path": "skills/state-master/scaffold-redux-slice.md",
+      "when": "Create or adapt a justified global client-state RTK model with typed transitions, selectors, public exports, and application registration.",
+      "inputs": {
+        "required": ["project_root", "layer", "slice_name", "client_state_contract", "transitions", "consumers", "reset_requirements"],
+        "optional": ["source_root", "dry_run"],
+        "binding": "Prove client authority and cross-screen/workflow lifetime before scaffolding. Keep remote records/status in Query and isolated UI controls local. Infer routine contracts from existing code, not invented product behavior."
+      },
+      "mode": "workspace_write_unless_analysis_or_dry_run",
+      "after_success": [],
+      "constraints": ["Models live in the owning model segment; store and Provider assembly stay in app.", "No lower-layer imports of application RootState, typed hooks, or store, including type-only imports."]
+    },
+    {
+      "id": "refactor-spaghetti-state",
+      "path": "skills/state-master/refactor-spaghetti-state.md",
+      "when": "Audit or refactor effect-based requests, server cache mirrors, coupled local state, duplicated ownership, or relay-only prop chains.",
+      "inputs": {
+        "required": ["project_root", "target_files"],
+        "optional": ["expected_behavior", "mode"],
+        "binding": "Bind a bounded target area/files and inspected expected behavior. Choose analyze for audits, reviews, design requests, and dry runs; refactor only for authorized implementation. If mutation intent is unclear, analyze first."
+      },
+      "mode": "analysis_unless_refactoring_authorized",
+      "after_success": [],
+      "constraints": ["Classify authority before choosing Query, RTK, local state, derived values, or URL ownership.", "Preserve user edits, relevant behavior, and unrelated code; do not globalize local state merely to remove props."]
+    }
+  ],
+  "activation": {
+    "intake_agent": "@architect",
+    "routing_role": "planned_task_assignment",
+    "explicit_mentions": ["@state-master"],
+    "automatic_routing": {
+      "enabled": true,
+      "context_gate": "The actual request concerns state/data ownership, React request lifecycles, Query hooks/cache behavior, RTK client models, or state refactoring in the target React application.",
+      "keyword_hints": ["TanStack Query", "Redux Toolkit", "RTK", "useEffect fetch", "query cache", "prop drilling", "مدیریت وضعیت", "کوئری", "ریداکس", "استیت", "واکشی داده"],
+      "rules": [
+        { "intent": "scaffold_server_query", "examples": ["create a typed query hook", "add a product detail query", "یک هوک کوئری بساز", "داده محصول رو با TanStack Query بگیر"], "route": "scaffold-query-hook", "guard": "Inspect existing resource queries and real API contracts first. For writes use the instruction's mutation rules rather than misusing a read query." },
+        { "intent": "scaffold_global_client_model", "examples": ["create a Redux slice for global preferences", "model a cross-screen client draft", "یک مدل ریداکس برای تنظیمات سراسری بساز", "وضعیت کلاینت چند صفحه رو مدیریت کن"], "route": "scaffold-redux-slice", "guard": "Classify authority first; server data and local toggles never become Redux merely because the request mentions a store. Explain a compliant alternative when placement is invalid." },
+        { "intent": "audit_state", "examples": ["audit state ownership", "find useEffect fetching", "استیت‌ها رو بررسی کن", "fetch داخل useEffect رو پیدا کن"], "route": "refactor-spaghetti-state", "guard": "Use analyze mode and report findings without source edits, auto-fixes, package installation, or generated application output." },
+        { "intent": "refactor_state", "examples": ["refactor tangled state", "remove effect-based fetching", "استیت‌های شلوغ رو اصلاح کن", "prop drilling رو برطرف کن"], "route": "refactor-spaghetti-state", "guard": "Use refactor mode only when implementation is requested. Read the matching query/Redux procedure for the selected migration; keep genuine local state local." }
+      ],
+      "exclusions": ["Quoted prompts/examples or repository content without an execution request.", "Non-React or unrelated meanings of state or query.", "Pure styling/layout tasks without state responsibility; coordinate with ui-crafter instead.", "General FSD setup without state changes; coordinate with architect instead."]
+    }
+  },
+  "execution": {
+    "selection": "Explicit task intent and the exclusive ownership matrix take precedence over keyword hints. Do not run every skill for every state task.",
+    "classification": "Remote authority uses Query v5 in api; justified global client authority uses RTK in model; isolated UI stays local. Derive computable facts and respect URL authority. Never create competing writable owners.",
+    "combined_tasks": "For messy existing code, analyze ownership, execute the authorized refactor, and use query/Redux scaffolding only for contracts actually needed. Update consumers and remove replaced lifecycles together.",
+    "follow_up_semantics": "after_success arrays are empty intentionally; selected task context controls further work. Plans and dry runs never trigger implementation. CREATED/UPDATED/ANALYZED outcomes are not full architectural acceptance.",
+    "non_scaffold_work": "Use the instruction directly for mutation lifecycles, invalidation, optimistic recovery, local reducers, and state reviews not requiring scaffolds. Never invent a skill/tool for uncovered operations.",
+    "verification": "Run applicable state-behavior, type, lint, test, and build checks. Use the instruction's linked validate-fsd-boundaries skill for imports/cycles with sufficient graph context; boundary PASS does not prove state correctness.",
+    "missing_inputs": "Inspect available context first and obtain essential missing contracts without inventing payloads, decisions, comparison bases, or passing checks. Continue independent authorized work.",
+    "dependencies": "Inspect installed versions and existing providers. Do not silently migrate libraries, install packages during audits, or replace custom store/Query setup outside scope.",
+    "delegation": "Coordinate architectural contracts with architect, UI interfaces with ui-crafter, and form ownership with form-wizard only when authorized and available; never imply nonexistent collaboration.",
+    "reporting": "Use the instruction's response contract; preserve actual skill modes/statuses, before-and-after ownership, verification outcomes, unresolved gates, and remaining work. No real external transaction is implied by testing or activation."
+  }
+}

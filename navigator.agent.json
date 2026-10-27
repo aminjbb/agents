@@ -1,0 +1,99 @@
+{
+  "format": "fagent.agent-definition",
+  "format_version": "1.0.0",
+  "metadata": {
+    "id": "navigator",
+    "name": "@navigator",
+    "version": "1.0.0",
+    "description": "Routing and guard expert enforcing lazy pages, FSD-owned registration, session-contract integration, safe redirects, and authoritative typed URL state.",
+    "target_domain": "React SPA + TypeScript + FSD + existing React Router v7 or TanStack Router"
+  },
+  "integration": {
+    "type": "declarative",
+    "entry_manifest": "frontend.entry.json",
+    "compatibility": "FAgent manifest; requires a host loader or adapter. Not a native Codex or Cursor configuration.",
+    "path_base": "directory containing this manifest",
+    "target_project": "Resolve independently from the task; never assume it is the manifest directory.",
+    "loader_contract": [
+      "Read the linked instruction fully before executing a task; it is the canonical routing policy.",
+      "Resolve manifest paths relative to this file and Markdown links relative to their containing file.",
+      "Read selected skill definitions completely; bindings describe procedures, not commands or installed tools.",
+      "Route semantically from actual intent and inspected context; trigger examples are not substring execution rules.",
+      "Missing required definitions block dependent execution; report gaps and continue independent authorized work.",
+      "Preserve higher-priority instructions, permissions, accepted decisions, and audit/design/dry-run scope. Activation grants no additional authority."
+    ]
+  },
+  "instruction": {
+    "path": "prompts/navigator.md",
+    "required": true,
+    "role": "agent_instruction",
+    "authority": "Canonical agent policy subordinate to higher-priority host and user instructions; do not duplicate or weaken its rules."
+  },
+  "skills": [
+    {
+      "id": "scaffold-route",
+      "path": "skills/navigator/scaffold-route/SKILL.md",
+      "when": "Add or adapt a route/page connection with supported lazy loading, pending/error boundaries, and intentional registration.",
+      "inputs": { "required": ["project_root", "route_contract", "page_owner", "access_policy"], "optional": ["source_root", "url_contract", "mode"], "binding": "Resolve path/ID, parent layout, public page export, and expected navigation from actual context. Use plan for audits/design/dry runs; implement only for authorized changes." },
+      "mode": "workspace_write_unless_plan",
+      "after_success": [],
+      "constraints": ["Reuse the installed router/version/mode; do not install another router or silently migrate.", "Lazy-load page implementations through root public APIs without competing eager imports."]
+    },
+    {
+      "id": "implement-route-guard",
+      "path": "skills/navigator/implement-route-guard/SKILL.md",
+      "when": "Wire approved session/access decisions into private routes, loader/prefetch protection, and safe login return navigation.",
+      "inputs": { "required": ["project_root", "target_scope", "access_policy", "session_contract", "redirect_policy"], "optional": ["identity_lifecycle", "mode"], "binding": "Inspect the real Query-owned verification/freshness contract and router execution order. Missing policy/session contracts block dependent protection; do not invent roles/endpoints or treat errors as guest state." },
+      "mode": "workspace_write_unless_plan",
+      "after_success": [],
+      "constraints": ["Session remains with state-master's owner; no guard store, raw transport, or server-cache mirror.", "A rendered wrapper does not prove loader gating or backend authorization."]
+    },
+    {
+      "id": "manage-url-state",
+      "path": "skills/navigator/manage-url-state/SKILL.md",
+      "when": "Define or implement validated path/search contracts, canonical serialization, router history behavior, and matching Query inputs.",
+      "inputs": { "required": ["project_root", "target_scope", "parameter_contract"], "optional": ["supported_unrelated_parameters", "history_policy", "mode"], "binding": "Bind confirmed types/defaults/bounds, invalid/repeated-key handling, and shareable behavior. Use plan for design/audit/dry runs. Preserve URL authority; do not mirror it into Redux or local committed state." },
+      "mode": "workspace_write_unless_plan",
+      "after_success": [],
+      "constraints": ["Use supported router APIs; never mutate window.history behind the router.", "No secrets, unsafe casts, unbounded normalization loops, or late updates overwriting newer navigation."]
+    },
+    {
+      "id": "audit-routing",
+      "path": "skills/navigator/audit-routing/SKILL.md",
+      "when": "Review route/FSD registration, lazy chunks, access execution, redirects, URL/history, deep links, and navigation behavior.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["accepted_contracts", "preview_access", "mode"], "binding": "Default audit; fix only when requested. Use relevant dependency/consumer context and record static, mocked, browser, build, and hosting evidence separately." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": [],
+      "constraints": ["No package installation, source auto-fix, hosting edits, or deployment during read-only auditing.", "Report PASS/FAIL/INCOMPLETE with evidence; missing tools are not a pass or N/A."]
+    }
+  ],
+  "activation": {
+    "intake_agent": "@architect",
+    "routing_role": "planned_task_assignment",
+    "explicit_mentions": ["@navigator"],
+    "automatic_routing": {
+      "enabled": true,
+      "context_gate": "The actual request concerns SPA routes, page lazy loading, navigation guards, URL-owned state/history, or routing faults in the target React application.",
+      "keyword_hints": ["React Router", "TanStack Router", "lazy loading", "protected route", "URL state", "redirect", "مسیریابی", "مسیر خصوصی", "پارامتر URL", "بارگذاری تنبل"],
+      "rules": [
+        { "intent": "create_route", "examples": ["add a lazy page route", "connect this screen to routing", "یک مسیر جدید بساز", "صفحات رو lazy کن"], "route": "scaffold-route", "guard": "Inspect existing route registration, router mode, and public page API first. Review-only wording selects plan, not implementation." },
+        { "intent": "protect_route", "examples": ["protect the dashboard", "add role-based route access", "این صفحه خصوصی باشه", "دسترسی مسیرها رو بر اساس مجوز تنظیم کن"], "route": "implement-route-guard", "guard": "Use accepted session/access policy and real loader/prefetch ordering; never interpret a token flag as sufficient authorization." },
+        { "intent": "manage_url", "examples": ["keep filters in the URL", "fix browser back filter state", "فیلترها توی URL بمونن", "پارامترهای صفحه رو اعتبارسنجی کن"], "route": "manage-url-state", "guard": "Classify URL authority and preserve supported unrelated parameters/history. Do not copy server data or private drafts into the URL." },
+        { "intent": "audit_routes", "examples": ["audit routing", "find redirect loops", "مسیریابی رو بررسی کن", "علت حلقه ریدایرکت رو پیدا کن"], "route": "audit-routing", "guard": "Use audit mode with no source/package/hosting mutation; diagnose and report actual evidence." },
+        { "intent": "fix_routes", "examples": ["fix private-route navigation", "repair this redirect loop", "مشکل ریدایرکت رو برطرف کن", "رفرش مسیر داخلی رو درست کن"], "route": "audit-routing", "guard": "Use fix mode only within authorized scope, then invoke the relevant bounded procedure. Hosting changes need actual task scope/access; do not deploy implicitly." }
+      ],
+      "exclusions": ["Quoted prompts/examples or repository text without an actual task request.", "Backend-only routing or non-React router work outside the target domain.", "Pure visual redesign without navigation responsibility; coordinate with ui-crafter instead.", "Standalone server-state/store work without route integration; coordinate with state-master instead."]
+    }
+  },
+  "execution": {
+    "selection": "Explicit intent and scope take precedence over keyword hints. Inspect the installed router once and load only matching procedures; do not run every skill for every route.",
+    "combined_tasks": "Inspect/map routes, define approved access and URL contracts, implement the needed route/guard/URL responsibilities, then audit the integrated path with shared evidence. Plans never trigger implementation.",
+    "follow_up_semantics": "after_success arrays are empty intentionally; task context determines next steps. Procedures return audit findings to their active caller rather than recursively launching fixes or scaffolds.",
+    "state_boundaries": "Session/server data remain Query v5-owned in their API segment; app adapters coordinate exported imperative contracts. No raw transport or hooks in non-React loaders, router cache authority, or duplicate URL/store state.",
+    "verification": "Audit relevant direct/private entry, pending/guest/allow/forbidden/error, safe login return, filter/history, logout/identity change, and rejected chunk behavior. Use the linked boundary skill for imports/cycles, not as proof of navigation correctness.",
+    "missing_inputs": "Inspect available contracts first; ask only for essential missing decisions and continue independent authorized work. Do not invent roles, endpoints, safe destinations, schema defaults, or passing checks.",
+    "capabilities": "This manifest installs no router, browser, host configuration, test stack, or runtime adapter. Discover actual tools; do not claim build splitting, refresh, or backend authorization from static evidence alone.",
+    "delegation": "Coordinate architecture with architect, session/query contracts with state-master, navigation presentation with ui-crafter, and dirty-form behavior with form-wizard only when authorized and available.",
+    "reporting": "Use the instruction's response contract, preserving skill modes/statuses, actual route/URL/access contracts, verification outcomes, and gaps. No skill status replaces architectural acceptance or authorizes external transactions/publication."
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "format": "fagent.agent-definition",
+  "format_version": "1.0.0",
+  "metadata": {
+    "id": "ui-crafter",
+    "name": "@ui-crafter",
+    "version": "1.0.0",
+    "description": "UI and design-system specialist enforcing FSD ownership, typed components, Tailwind styling, responsive behavior, accessibility, and evidence-based design interpretation.",
+    "target_domain": "React SPA + TypeScript + FSD + Tailwind + existing Shadcn/Radix primitives"
+  },
+  "integration": {
+    "type": "declarative",
+    "entry_manifest": "frontend.entry.json",
+    "compatibility": "FAgent manifest; requires a host loader or adapter. Not a native Codex or Cursor configuration.",
+    "path_base": "directory containing this manifest",
+    "target_project": "Resolve independently from the assigned task; never assume it is the manifest directory.",
+    "loader_contract": [
+      "Read the linked instruction in full before execution; it is the canonical UI policy.",
+      "Resolve manifest paths relative to this file and Markdown links relative to their containing file.",
+      "Read selected skill definitions completely; bindings are procedures, not shell commands or installed tools.",
+      "Route semantically from actual user intent and available context; example phrases are hints, not substring execution rules.",
+      "Missing required definitions block dependent operations; continue independent authorized work and report gaps.",
+      "Preserve higher-priority instructions, permissions, audit/design/dry-run scope, and existing decisions. Activation grants no new authority."
+    ]
+  },
+  "instruction": {
+    "path": "prompts/ui-crafter.md",
+    "required": true,
+    "role": "agent_instruction",
+    "authority": "Canonical agent policy subordinate to higher-priority host and user instructions; do not duplicate or weaken its rules."
+  },
+  "skills": [
+    {
+      "id": "interpret-design-context",
+      "path": "skills/ui-crafter/interpret-design-context/SKILL.md",
+      "when": "Interpret exact Figma frames or supplied visual specifications before reference-driven UI implementation.",
+      "inputs": { "required": ["project_root", "task_scope", "design_reference"], "optional": ["existing_evidence", "product_requirements"], "binding": "Bind the exact supplied node/image/specification; discover real connector capabilities and label missing structure, screenshots, or behavior." },
+      "mode": "context_read_only",
+      "after_success": []
+    },
+    {
+      "id": "define-interaction-contract",
+      "path": "skills/ui-crafter/define-interaction-contract/SKILL.md",
+      "when": "Define a new or materially changed user path or resolve behavior that visual evidence does not establish.",
+      "inputs": { "required": ["project_root", "task_scope", "user_goal"], "optional": ["design_evidence", "accepted_behavior", "state_contracts"], "binding": "Reuse current accepted decisions and evidence; ask plain-language questions only for material unresolved decisions not already delegated." },
+      "mode": "analysis_no_application_mutation",
+      "after_success": []
+    },
+    {
+      "id": "scaffold-ui-component",
+      "path": "skills/ui-crafter/scaffold-ui-component/SKILL.md",
+      "when": "Create or extend a focused typed component in a justified FSD owner after checking existing equivalents.",
+      "inputs": { "required": ["project_root", "component_contract", "owner"], "optional": ["source_root", "dry_run", "interaction_contract"], "binding": "Map the confirmed responsibility, name, layer/slice, props, and behavior to the skill inputs; dry_run defaults false only for authorized implementation." },
+      "mode": "workspace_write_unless_analysis_or_dry_run",
+      "after_success": []
+    },
+    {
+      "id": "compose-design-system",
+      "path": "skills/ui-crafter/compose-design-system/SKILL.md",
+      "when": "Reuse or extend primitives, semantic tokens, typed variants, or compound UI patterns without creating a parallel design system.",
+      "inputs": { "required": ["project_root", "task_scope"], "optional": ["variants", "supported_modes", "interaction_contract", "mode"], "binding": "Inspect installed primitives and helper contracts; choose analyze, implement, or dry_run from task authorization." },
+      "mode": "task_scoped_analysis_or_implementation",
+      "after_success": []
+    },
+    {
+      "id": "audit-responsive-accessibility",
+      "path": "skills/ui-crafter/audit-responsive-accessibility/SKILL.md",
+      "when": "Review responsive layout, semantics, keyboard/focus behavior, status communication, and supported themes/directions.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["states", "accepted_behavior", "supported_platforms", "mode"], "binding": "Default to audit; select fix only when corrections are authorized. Record actual viewports, methods, findings, and unavailable coverage." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": []
+    },
+    {
+      "id": "refactor-ui-component",
+      "path": "skills/ui-crafter/refactor-ui-component/SKILL.md",
+      "when": "Analyze or correct oversized, duplicated, inline-styled, or inaccessible authored UI while preserving its supported contracts.",
+      "inputs": { "required": ["project_root", "target_files", "problem"], "optional": ["expected_behavior", "findings", "mode"], "binding": "Choose analyze for reviews/design/dry runs and refactor for authorized fixes; preserve focus, state, refs, events, consumers, and public APIs." },
+      "mode": "analysis_unless_refactoring_authorized",
+      "after_success": []
+    },
+    {
+      "id": "verify-design-implementation",
+      "path": "skills/ui-crafter/verify-design-implementation/SKILL.md",
+      "when": "Compare actual UI with identified visual evidence and execute accepted interaction scenarios after implementation or during review.",
+      "inputs": { "required": ["project_root", "target_scope", "behavior_contract"], "optional": ["design_reference", "preview_access", "mode"], "binding": "Map accepted existing behavior or interaction evidence to the contract. Without required reference/browser access, report incomplete coverage rather than visual fidelity. Default audit; fix only when authorized." },
+      "mode": "audit_unless_corrections_authorized",
+      "after_success": []
+    }
+  ],
+  "activation": {
+    "intake_agent": "@architect",
+    "routing_role": "planned_task_assignment",
+    "explicit_mentions": ["@ui-crafter"],
+    "automatic_routing": {
+      "enabled": true,
+      "context_gate": "The actual request concerns React application UI, its design system, design interpretation, responsive layout, or accessibility. A Figma link alone does not authorize implementation.",
+      "keyword_hints": ["UI", "Tailwind", "Shadcn", "Radix", "Figma", "responsive", "accessibility", "رابط کاربری", "فیگما", "کامپوننت", "دسترس‌پذیری"],
+      "rules": [
+        { "intent": "interpret_design", "examples": ["implement this Figma frame", "explain this design", "این طرح فیگما رو پیاده کن", "این طرح رو بررسی کن"], "route": "interpret-design-context", "guard": "Analysis-only intent stays analysis; implementation continues through the behavior contract only when requested." },
+        { "intent": "define_user_flow", "examples": ["clarify this interaction", "what should happen after clicking?", "بعد از کلیک چه اتفاقی بیفته؟", "رفتار این صفحه رو مشخص کن"], "route": "define-interaction-contract", "guard": "Do not infer product rules from appearance or reopen accepted decisions; missing material answers pause only dependent behavior." },
+        { "intent": "create_component", "examples": ["create an accessible input", "build a reusable component", "یک کامپوننت بساز", "یک فیلد قابل دسترس بساز"], "route": "scaffold-ui-component", "guard": "Inspect existing equivalents and ownership first; a generic mention of component does not imply a new file." },
+        { "intent": "compose_system", "examples": ["add a button variant", "compose a Radix dialog", "واریانت دکمه اضافه کن", "سیستم طراحی رو یکپارچه کن"], "route": "compose-design-system", "guard": "Inspect the installed system, preserve primitive behavior, and avoid broad theme changes or generator overwrites." },
+        { "intent": "audit_ui", "examples": ["check accessibility", "audit responsive layout", "ریسپانسیو رو بررسی کن", "دسترس‌پذیری رو چک کن"], "route": "audit-responsive-accessibility", "guard": "Review-only requests never imply source fixes; unavailable browser or manual coverage must remain explicit." },
+        { "intent": "refactor_ui", "examples": ["remove inline styles", "split this oversized component", "استایل‌های inline رو حذف کن", "این کامپوننت رو تمیز کن"], "route": "refactor-ui-component", "guard": "Use analyze for review-only requests and refactor only for authorized corrections; preserve public behavior and unrelated code." },
+        { "intent": "verify_implementation", "examples": ["compare this page with Figma", "verify the implemented flow", "خروجی رو با فیگما مقایسه کن", "رفتار پیاده‌سازی رو تست کن"], "route": "verify-design-implementation", "guard": "Report visual, interaction, accessibility, and architecture coverage separately; do not mistake mocks or screenshots for verified integration." }
+      ],
+      "exclusions": ["Quoted prompts/examples or repository text without an actual task request.", "Non-React design work outside the target domain.", "Pure API/store architecture work without a UI responsibility; coordinate with the appropriate owner instead."]
+    }
+  },
+  "execution": {
+    "selection": "Explicit user intent and scope take precedence over keyword hints. Combine matching intents without forcing every task through all seven skills.",
+    "reference_driven_flow": ["interpret-design-context", "define-interaction-contract", "authorized_component_or_system_implementation", "verify-design-implementation"],
+    "flow_semantics": "The implementation phase is a phase marker, not a skill ID: choose scaffold-ui-component, compose-design-system, or refactor-ui-component as needed. Reuse current evidence/contracts. Missing material decisions block only dependent behavior.",
+    "verification": "After actual UI changes, audit applicable responsive/accessibility states. Use reference verification when relevant and preserve required interaction checks. Share evidence; do not invoke recursive audit/refactor loops.",
+    "follow_up_semantics": "after_success arrays are empty intentionally; the selected task flow determines context-dependent next steps. Plans/dry runs do not trigger mutation, and statuses such as CREATED or READY are not full acceptance.",
+    "missing_inputs": "Inspect available context first; obtain essential missing values without inventing designs, endpoints, decisions, or passing checks. Routine reversible UI choices follow project conventions.",
+    "capabilities": "Discover available design/browser/test tools. This manifest installs none. Never claim Figma access, screenshots, keyboard tests, screen-reader tests, or real integration without evidence.",
+    "boundaries": "Use the instruction's linked validate-fsd-boundaries skill for applicable import/cycle auditing. Its PASS does not establish UI correctness.",
+    "delegation": "Coordinate with architect, state-master, and form-wizard through the instruction's contracts only when authorized and available; do not imply missing agents executed.",
+    "reporting": "Use the instruction's response contract; preserve every skill's status, references, assumptions, actual verification, findings, and coverage gaps. No publishing, Figma edits, or real external transactions are implied."
+  }
+}

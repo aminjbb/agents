@@ -1,0 +1,61 @@
+"""Dependency-aware concurrent execution with canonical declared write-scope locks."""
+import asyncio
+
+from .paths import conflicting, scope_keys
+from .worker import work
+
+
+async def execute(state, gateway):
+    tasks = state["plan"]["tasks"]
+    by_id = {task["id"]: task for task in tasks}
+    active = {}
+    capacity = state["request"]["max_parallel"]
+    root = state["request"]["project_root"]
+    try:
+        while True:
+            for task in tasks:
+                if task["status"] not in ("pending", "ready"):
+                    continue
+                deps = [by_id[key] for key in task["depends_on"]]
+                if any(dep["status"] in ("blocked", "changes_required") for dep in deps):
+                    task.update(status="blocked", block_reason="dependency",
+                                feedback="A prerequisite did not complete")
+                    gateway.event("task_dependency_blocked", task_id=task["id"])
+                    continue
+                if not all(dep["status"] == "done" for dep in deps):
+                    continue
+                task["status"] = "ready"
+                keys = scope_keys(root, task["write_scope"])
+                if len(active) >= capacity or any(conflicting(keys, info[1]) for info in active.values()):
+                    continue
+                task["status"] = "running"
+                future = asyncio.create_task(work(task, state, gateway))
+                active[future] = (task, keys)
+            if not active:
+                while True:
+                    blocked = [task for task in tasks if task["status"] in ("pending", "ready") and
+                               any(by_id[key]["status"] in ("blocked", "changes_required")
+                                   for key in task["depends_on"])]
+                    if not blocked:
+                        break
+                    for task in blocked:
+                        task.update(status="blocked", block_reason="dependency",
+                                    feedback="A prerequisite did not complete")
+                break
+            finished, _ = await asyncio.wait(active, return_when=asyncio.FIRST_COMPLETED)
+            for future in finished:
+                task, _ = active.pop(future)
+                try:
+                    await future
+                except Exception as error:
+                    task.update(status="blocked", block_reason="execution_error", error=str(error))
+                    gateway.event("task_error", task_id=task["id"], reason=str(error))
+        gateway.event("schedule_settled")
+    finally:
+        for future, (task, _) in active.items():
+            future.cancel()
+            task.update(status="blocked", block_reason="interrupted",
+                        feedback="Execution interrupted; inspect side effects before retry")
+        await asyncio.gather(*active, return_exceptions=True)
+        if active:
+            gateway.event("schedule_interrupted")

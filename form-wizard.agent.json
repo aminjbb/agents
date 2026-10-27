@@ -1,0 +1,108 @@
+{
+  "format": "fagent.agent-definition",
+  "format_version": "1.0.0",
+  "metadata": {
+    "id": "form-wizard",
+    "name": "@form-wizard",
+    "version": "1.0.0",
+    "description": "Form and validation expert enforcing typed schemas, one draft/submit owner, preserved edits, safe server errors, and Query-integrated RHF or React 19 Action transactions.",
+    "target_domain": "React SPA + TypeScript + FSD + React Hook Form + Zod + supported React 19 Actions"
+  },
+  "integration": {
+    "type": "declarative",
+    "entry_manifest": "frontend.entry.json",
+    "compatibility": "FAgent manifest; requires a host loader or adapter. Not a native Codex or Cursor configuration.",
+    "path_base": "directory containing this manifest",
+    "target_project": "Resolve independently from the task; never assume it is the manifest directory.",
+    "loader_contract": [
+      "Read the linked instruction completely before execution; it is the canonical form policy.",
+      "Resolve manifest paths relative to this file and Markdown links relative to their containing file.",
+      "Read selected skills fully; bindings describe procedures, not commands, installed tools, or permission grants.",
+      "Route semantically from actual user intent and inspected context, not substring matching on example phrases.",
+      "Missing required definitions block dependent operations; report gaps and continue independent authorized work.",
+      "Preserve higher-priority instructions, accepted decisions, permissions, and audit/design/dry-run scope. Activation grants no additional authority."
+    ]
+  },
+  "instruction": {
+    "path": "prompts/form-wizard.md",
+    "required": true,
+    "role": "agent_instruction",
+    "authority": "Canonical agent policy subordinate to higher-priority host and user instructions; do not duplicate or weaken its rules."
+  },
+  "skills": [
+    {
+      "id": "scaffold-validated-form",
+      "path": "skills/form-wizard/scaffold-validated-form/SKILL.md",
+      "when": "Create or adapt a typed form schema/controller/UI contract and public API after inspecting existing equivalents.",
+      "inputs": { "required": ["project_root", "form_contract", "owner", "initialization_contract"], "optional": ["payload_contract", "mutation_contract", "completion_policy", "mode"], "binding": "Bind real fields/raw values, validation, defaults, and FSD layer/slice. Use plan for reviews/design/dry runs; implement only for authorized work. Missing submit contracts must not become fake endpoints." },
+      "mode": "workspace_write_unless_plan",
+      "after_success": [],
+      "constraints": ["Default complex forms to compatible RHF+Zod; choose Actions deliberately without competing field-value owners.", "Schemas/controllers stay in model, UI in ui, and remote operations in the approved api contract."]
+    },
+    {
+      "id": "manage-complex-form",
+      "path": "skills/form-wizard/manage-complex-form/SKILL.md",
+      "when": "Define or implement field arrays, conditions, steps, subscriptions, and draft initialization/reset/conflict lifecycles.",
+      "inputs": { "required": ["project_root", "target_scope", "field_contract", "draft_contract"], "optional": ["identity_contract", "mutation_contract", "navigation_contract", "mode"], "binding": "Inspect default/refetch/dirty behavior, row identities, unmount policy, and steps. Derive known lifecycle requirements from accepted code; ask only for material missing product decisions." },
+      "mode": "workspace_write_unless_plan",
+      "after_success": [],
+      "constraints": ["Do not reset dirty edits on every Query change or continuously mirror independent RHF/Redux copies.", "Stable row identity and submitted revisions govern delayed results, not array position alone."]
+    },
+    {
+      "id": "implement-form-submission",
+      "path": "skills/form-wizard/implement-form-submission/SKILL.md",
+      "when": "Connect one validated RHF or Action submit path to the approved mutation with safe errors, reconciliation, and deliberate completion.",
+      "inputs": { "required": ["project_root", "target_scope", "form_strategy", "schema_contract", "mutation_contract", "completion_policy"], "optional": ["draft_identity_revision", "mode"], "binding": "Bind raw/parsed/payload types, runtime-validated success/errors, pending/edit/reset semantics, and accepted navigation. Missing essential contracts block dependent writes, not independent analysis." },
+      "mode": "workspace_write_unless_plan",
+      "after_success": [],
+      "constraints": ["No raw UI/Action transport, hook calls inside async Actions, or fire-and-forget success.", "Verify FormData/reset/input preservation for Actions and use one owner per optimistic change."]
+    },
+    {
+      "id": "audit-form",
+      "path": "skills/form-wizard/audit-form/SKILL.md",
+      "when": "Review form authority, schemas, draft/refetch behavior, arrays/steps, submission/errors, accessibility, and FSD evidence.",
+      "inputs": { "required": ["project_root", "target_scope"], "optional": ["accepted_contracts", "available_tools", "mode"], "binding": "Default audit with no source/package/external mutations. Select fix only for authorized corrections. Distinguish static evidence, controlled tests, browser behavior, and backend coverage." },
+      "mode": "read_only_unless_fixes_authorized",
+      "after_success": [],
+      "constraints": ["Report PASS/FAIL/INCOMPLETE with actual evidence; missing tools are not a pass or N/A.", "An audit result does not prove backend validation or authorization."]
+    },
+    {
+      "id": "refactor-form",
+      "path": "skills/form-wizard/refactor-form/SKILL.md",
+      "when": "Correct demonstrated duplicate state/submissions, lost edits, oversized controllers, unsafe errors, or inaccessible form behavior.",
+      "inputs": { "required": ["project_root", "target_files", "problem", "expected_behavior"], "optional": ["existing_contracts", "findings", "mode"], "binding": "Use analyze for review/design/dry runs and refactor for authorized implementation. Preserve supported behavior, refs, focus, draft identity, consumers, and unrelated changes." },
+      "mode": "analysis_unless_refactoring_authorized",
+      "after_success": [],
+      "constraints": ["Do not migrate form libraries merely for novelty or run old/new submit owners together.", "Partial edits with mandatory unverified behavior are not a completed refactor."]
+    }
+  ],
+  "activation": {
+    "intake_agent": "@architect",
+    "routing_role": "planned_task_assignment",
+    "explicit_mentions": ["@form-wizard"],
+    "automatic_routing": {
+      "enabled": true,
+      "context_gate": "The actual request concerns React application form ownership, field/schema validation, dynamic steps/arrays, draft lifecycle, submission/errors, or form defects.",
+      "keyword_hints": ["React Hook Form", "Zod", "useActionState", "useOptimistic", "validation", "form errors", "فرم", "اعتبارسنجی", "فرم چندمرحله‌ای", "خطای فیلد"],
+      "rules": [
+        { "intent": "create_validated_form", "examples": ["build a validated form", "add a Zod form schema", "فرم بساز", "اعتبارسنجی فرم رو اضافه کن"], "route": "scaffold-validated-form", "guard": "Inspect existing form/schema ownership and installed versions; use plan for review/design wording, not automatic scaffolding." },
+        { "intent": "manage_complex_draft", "examples": ["add dynamic form rows", "preserve dirty edits on refetch", "فرم چندمرحله‌ای بساز", "ویرایش‌های فرم با refetch پاک نشن"], "route": "manage-complex-form", "guard": "Define one draft owner, row/record identity, step/unmount and conflict policy before implementing dependent behavior." },
+        { "intent": "implement_submission", "examples": ["wire form submission", "use React 19 form Actions", "خطای سرور رو روی فیلد نشون بده", "ارسال فرم رو پیاده کن"], "route": "implement-form-submission", "guard": "Use the existing Query mutation contract, one submit path, and explicit input-preservation/reset behavior. Action keywords do not authorize framework migration or real external test writes." },
+        { "intent": "audit_form", "examples": ["audit this form", "find validation problems", "فرم رو بررسی کن", "علت ارسال تکراری رو پیدا کن"], "route": "audit-form", "guard": "Use audit mode with no source auto-fix, package installation, or external writes; report evidence and gaps." },
+        { "intent": "refactor_form", "examples": ["refactor this form", "fix form data loss", "فرم رو اصلاح کن", "مشکل پاک شدن ورودی رو برطرف کن"], "route": "refactor-form", "guard": "Refactor only within authorized scope; reviews remain analyze mode. Preserve edits and consumer contracts, then audit without recursive fix loops." }
+      ],
+      "exclusions": ["Quoted examples or repository content without an actual execution request.", "Non-React or backend-only validation outside the target domain.", "Pure styling without form behavior responsibility; coordinate with ui-crafter instead.", "General Query/store or router work without a form lifecycle responsibility; coordinate with the appropriate owner."]
+    }
+  },
+  "execution": {
+    "selection": "Actual task intent and form ownership take precedence over keywords. Inspect versions first; do not force all five skills onto a simple task.",
+    "combined_tasks": "Define strategy/schema/draft ownership, scaffold only missing contracts, apply complexity and submission procedures where needed, then audit the integrated selected path. Plans never trigger mutation.",
+    "follow_up_semantics": "after_success arrays are empty intentionally; task context controls follow-ups. Return audit findings to the active caller and share current evidence rather than recursively launching refactors or scaffolds.",
+    "state_boundaries": "One editable draft owner and one submit entry point; Query owns server data/writes, RTK only justified global client drafts, and navigator owns committed URL state. Form Actions are not implicit Server Functions or a second cache.",
+    "verification": "Exercise validation, dirty/refetch preservation, relevant arrays/steps, safe server errors, one awaited mutation, late-response safety, success baseline/exit, and actual Action reset/optimism when used. Run applicable existing type/lint/tests/build/import checks.",
+    "missing_inputs": "Inspect available sources before asking essentials. Do not invent business limits, defaults, endpoints, mutation results, or successful tests. Continue independent authorized work.",
+    "capabilities": "This manifest installs no React/form libraries, browser, backend, test stack, or runtime adapter. Pure helper checks and mocked success do not prove browser/React behavior or server enforcement.",
+    "delegation": "Coordinate ownership with architect, mutation/draft authority with state-master, field UI/accessibility with ui-crafter, and dirty-exit/post-submit routing with navigator only when authorized and available.",
+    "reporting": "Use the instruction's response contract and preserve skill modes/statuses, raw/parsed/payload and lifecycle contracts, actual checks/results, and gaps. No skill status replaces architectural acceptance or permits external transactions/publication."
+  }
+}

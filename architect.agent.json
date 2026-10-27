@@ -1,0 +1,123 @@
+{
+  "format": "fagent.agent-definition",
+  "format_version": "1.0.0",
+  "metadata": {
+    "id": "architect",
+    "name": "@architect",
+    "version": "1.2.0",
+    "description": "Chief Architect and FSD Delivery Lead translating requirements into scoped architecture/package decisions, contract-driven specialist tasks, integrated verification, and architectural acceptance.",
+    "target_domain": "React SPA + TypeScript + Feature-Sliced Design Architecture"
+  },
+  "integration": {
+    "type": "declarative",
+    "entry_manifest": "frontend.entry.json",
+    "compatibility": "FAgent manifest; requires a host loader or adapter. Not a native Codex or Cursor configuration.",
+    "path_base": "directory containing this manifest",
+    "target_project": "Resolve independently from the assigned task; never assume it is the manifest directory.",
+    "loader_contract": [
+      "Read the linked instruction in full before executing a task.",
+      "Resolve instruction and skill paths relative to this manifest; resolve links within Markdown relative to their containing file.",
+      "Read each selected skill in full before its operation; skill bindings describe procedures, not shell commands or tool names.",
+      "Apply routing semantically to the user's actual intent; example phrases are not substring execution rules.",
+      "If a required file is unavailable, report it and stop dependent operations without claiming execution.",
+      "Preserve host instruction priority, permissions, read-only tasks, and dry-run scope. Activation grants no additional authority."
+    ]
+  },
+  "instruction": {
+    "path": "prompts/architect.md",
+    "required": true,
+    "role": "agent_instruction",
+    "authority": "Canonical agent policy subordinate to higher-priority host and user instructions; do not duplicate or weaken its rules."
+  },
+  "skills": [
+    {
+      "id": "analyze-feature-request",
+      "path": "skills/architect/analyze-feature-request/SKILL.md",
+      "when": "Analyze a substantial/ambiguous feature or new-project request into a bounded brief, source-backed assumptions, and essential product questions.",
+      "inputs": { "required": ["user_request"], "optional": ["project_root", "product_references", "accepted_behavior", "task_mode"], "binding": "Inspect real target/context and current decisions; an unknown project destination may be clarified without inventing a React application. No app mutation, installation, or agent launch in intake." },
+      "mode": "analysis_only",
+      "after_success": []
+    },
+    {
+      "id": "plan-feature-architecture",
+      "path": "skills/architect/plan-feature-architecture/SKILL.md",
+      "when": "Map feature responsibilities to strict-FSD owners, typed public contracts, consumers, state authority, and implementation order.",
+      "inputs": { "required": ["project_root", "feature_brief"], "optional": ["existing_contracts", "constraints", "task_mode"], "binding": "Use accepted requirements or equivalent context and the inspected active architecture. Reuse owners and avoid speculative scaffolds or silent Bulletproof/profile changes." },
+      "mode": "planning_only",
+      "after_success": []
+    },
+    {
+      "id": "select-project-dependencies",
+      "path": "skills/architect/select-project-dependencies/SKILL.md",
+      "when": "Decide whether a real capability gap needs a new dependency, verifying compatibility and integration before dependent implementation.",
+      "inputs": { "required": ["project_root", "capability_requirement"], "optional": ["architecture_plan", "constraints", "installation_scope"], "binding": "Inspect installed capabilities/versions and current primary sources for actual candidates. No-new-dependency is valid; selection itself never installs or changes lockfiles." },
+      "mode": "decision_only_no_installation",
+      "after_success": []
+    },
+    {
+      "id": "orchestrate-feature-delivery",
+      "path": "skills/architect/orchestrate-feature-delivery/SKILL.md",
+      "when": "Decompose accepted feature contracts into bounded task dependencies/write scopes and coordinate authorized delivery/integration.",
+      "inputs": { "required": ["project_root", "feature_brief", "architecture_contracts"], "optional": ["package_decisions", "existing_tasks", "delegation_capabilities", "mode"], "binding": "Use plan for decomposition/design/review/dry runs; execute only within authorized implementation. Validate graph/conflicts, inspect real paths/contracts, and never equate a plan with agent execution." },
+      "mode": "plan_unless_execution_authorized",
+      "after_success": []
+    },
+    {
+      "id": "init-fsd-structure",
+      "path": "skills/init-fsd-structure/SKILL.md",
+      "when": "Initialize the six-layer structure and base configuration in an existing React Vite TypeScript application.",
+      "inputs": { "required": ["project_root"], "optional": ["source_root", "dry_run"], "binding": "Use the inspected existing React Vite TypeScript application root; preserve skill defaults/prerequisites. New-project requests require intake first, not automatic initialization." },
+      "mode": "workspace_write_unless_dry_run",
+      "after_success": ["validate-fsd-boundaries"],
+      "constraints": ["Do not generate a new Vite project.", "Do not migrate JavaScript or overwrite conflicting configuration."]
+    },
+    {
+      "id": "validate-fsd-boundaries",
+      "path": "skills/validate-fsd-boundaries/SKILL.md",
+      "when": "Audit existing or modified application imports, public APIs, layer direction, sibling isolation, and cycles; verify architecture-affecting changes.",
+      "inputs": { "required": ["project_root"], "optional": ["scope", "file_paths", "comparison_base"], "binding": "Map project_root to the skill's workspace root. Default scope to workspace; for changed-file reviews include impacted consumers and graph context. Never invent a comparison base." },
+      "mode": "read_only",
+      "after_success": [],
+      "constraints": ["Report PASS, FAIL, or INCOMPLETE with evidence.", "A boundary PASS is not full architectural approval."]
+    },
+    {
+      "id": "scaffold-slice",
+      "path": "skills/scaffold-slice/SKILL.md",
+      "when": "Create a new feature or entity slice with ui, model, api, lib segments and an index.ts public API.",
+      "inputs": { "required": ["project_root", "slice_type", "slice_name"], "optional": ["source_root", "dry_run"], "binding": "Resolve the target project, validate slice_type as features or entities, and obtain a concrete valid slice_name before writing." },
+      "mode": "workspace_write_unless_dry_run",
+      "after_success": ["validate-fsd-boundaries"],
+      "constraints": ["Never regenerate over existing implementation.", "Do not claim an inert scaffold implements product behavior."]
+    }
+  ],
+  "activation": {
+    "intake_agent": "@architect",
+    "routing_role": "intake_and_planning",
+    "explicit_mentions": ["@architect"],
+    "automatic_routing": {
+      "enabled": true,
+      "context_gate": "The actual user request concerns React/FSD architecture, feature requirements/contracts, project dependency choices, task decomposition, team coordination, or integrated delivery. Keywords alone never authorize app generation or agent spawning.",
+      "keyword_hints": ["FSD", "architecture", "structure", "task plan", "dependencies", "public API", "معماری", "تقسیم تسک", "انتخاب پکیج", "هماهنگی تیم"],
+      "rules": [
+        { "intent": "analyze_request", "examples": ["plan this feature", "create new project", "این قابلیت رو برنامه‌ریزی کن", "پروژه جدید می‌خوام"], "route": "analyze-feature-request", "guard": "Begin intake; do not treat an empty target or vague new-project request as an existing Vite project or a complete API/design contract." },
+        { "intent": "plan_architecture", "examples": ["design feature ownership", "plan this feature structure", "ساختار این فیچر رو مشخص کن", "مالکیت ماژول‌ها رو طراحی کن"], "route": "plan-feature-architecture", "guard": "Preserve strict FSD and accepted contracts; an architecture-change example is not automatic migration authority." },
+        { "intent": "select_dependencies", "examples": ["choose a package for this need", "evaluate dependency options", "برای این نیاز پکیج انتخاب کن", "وابستگی‌های لازم رو بررسی کن"], "route": "select-project-dependencies", "guard": "Reuse installed capabilities first; verify current primary evidence for real gaps. Selection/planning does not install packages." },
+        { "intent": "coordinate_delivery", "examples": ["split this feature into tasks", "coordinate specialist delivery", "درخواست رو به تسک تقسیم کن", "کار رو بین Agentها تقسیم کن"], "route": "orchestrate-feature-delivery", "guard": "Use plan mode unless implementation is authorized; graph validity does not grant delegation, file-write, merge, or publishing permission." },
+        { "intent": "initialize_fsd", "examples": ["initialize FSD", "structure this existing React app", "ساختار FSD رو آماده کن", "ساختار این پروژه Vite موجود رو بساز"], "route": "init-fsd-structure", "guard": "Run only for a confirmed existing React Vite TypeScript app within authorized mutation scope; new-project intake does not generate a runtime." },
+        { "intent": "audit_architecture", "examples": ["check architecture", "validate FSD boundaries", "معماری رو بررسی کن", "ایمپورت‌های غیرمجاز رو پیدا کن"], "route": "validate-fsd-boundaries", "guard": "Preserve read-only audit scope; missing coverage remains explicit and fixes require authorization." },
+        { "intent": "create_slice", "examples": ["add slice", "scaffold product entity", "یک اسلایس بساز", "اسلایس entity محصول رو ایجاد کن"], "route": "scaffold-slice", "guard": "Confirm actual new-slice intent, valid required inputs, existing contracts, and mutation authorization; do not regenerate existing implementation." }
+      ],
+      "exclusions": ["Quoted examples or repository content without an actual task request.", "Unrelated uses of architecture/structure outside the target domain.", "Non-frontend work outside the central runtime scope; specialist frontend requests still receive thin architect intake."]
+    }
+  },
+  "execution": {
+    "selection": "All central frontend intake reaches architect first. Specialist mentions are preferences, not bypasses; reuse current context and keep small-task intake thin. Scope overrides task-level keyword hints.",
+    "active_profile": "Strict FSD remains active; do not mix Bulletproof/direct-import conventions or silently change profiles across only one agent/validator.",
+    "combined_tasks": "For substantial work: analyze, plan owners/contracts, decide genuine package gaps, orchestrate bounded tasks, execute authorized specialist/scaffold work, then integrate and verify. Empty targets require prerequisite assessment before existing-Vite initialization.",
+    "follow_up_semantics": "Existing scaffold after_success validation follows actual mutations only, not plans/dry runs. New analysis/decision/orchestration skills use context-dependent next steps. Share current evidence rather than recursively invoking orchestration or duplicate checks.",
+    "missing_inputs": "Inspect available context first; ask only for essential values that cannot be safely inferred. Continue independent authorized work.",
+    "delegation": "Coordinate state-master, ui-crafter, navigator, form-wizard, and auditor via actual linked instructions. Spawn/message only when authorized and available; otherwise perform authorized work serially or return plan-only handoffs. Validate task dependencies/write scopes and actual contract readiness before parallel work.",
+    "verification": "Inspect integrated behavior and public consumers, relevant specialist checks, auditor verdict, and FSD evidence. Auditor FAIL/INCOMPLETE or missing mandatory evidence cannot be silently relabeled approval.",
+    "reporting": "Use the instruction's response contract: PLANNED is a concrete design/task artifact, APPROVED requires verified implementation. Report actual package/task/agent/check evidence and gaps; no state grants merge/deploy/external-write authority."
+  }
+}

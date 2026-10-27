@@ -1,0 +1,13 @@
+{
+  "format": "fagent.frontend-entry",
+  "format_version": "1.0.0",
+  "intake_agent": "@architect",
+  "quality_reviewer": "@auditor",
+  "acceptance_agent": "@architect",
+  "scope": "All requests submitted through the FAgent frontend runtime",
+  "routing": "Explicit specialist mentions remain context/preferences; intake always goes to architect before task dispatch.",
+  "execution": "Run ready tasks up to the request capacity; serialize overlapping canonical write scopes and wait for approved prerequisites.",
+  "review": "Each completed task needs architect review; integrated delivery needs auditor PASS and architect approval with required checks passing.",
+  "adapter_protocol": "docs/orchestration.md",
+  "limitations": "This entry declaration does not intercept direct IDE conversations or install a provider adapter. Declared scope locking is not an OS sandbox."
+}
