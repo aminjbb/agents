@@ -17,8 +17,22 @@ def architecture_context(state):
                         if key not in ("status", "plan")})
 
 
+def normalize_execution_owner(task):
+    """Keep implementation and audit work with their specialist owners."""
+    if task.get("owner") != "@architect":
+        return
+    scope = task.get("write_scope", [])
+    objective = str(task.get("objective", "")).lower()
+    if any(path.startswith(("src/pages/", "src/widgets/", "src/features/",
+                            "src/entities/", "src/shared/ui/")) for path in scope):
+        task["owner"] = "@ui-crafter"
+    elif any(word in objective for word in ("audit", "review", "quality", "بازبینی", "کیفیت")):
+        task["owner"] = "@auditor"
+
+
 async def work(task, state, gateway):
     limit = state["request"]["max_attempts"]
+    normalize_execution_owner(task)
     while state.get("unlimited_attempts") or task["attempts"] < limit:
         archive_task(task)
         task.update(status="running", attempts=task["attempts"] + 1, error=None, result=None, review=None)
