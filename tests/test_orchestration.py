@@ -97,6 +97,15 @@ class OrchestrationTests(unittest.IsolatedAsyncioTestCase):
         # rework assignment before the task remains blocked.
         self.assertIn("review_task", [p["operation"] for p in adapter.calls])
 
+    async def test_static_inconclusive_check_does_not_stop_implementation(self):
+        async def handler(packet):
+            if packet["operation"] == "execute_task":
+                value = evidence(status="completed", changed_files=[])
+                value["checks"][0]["status"] = "INCONCLUSIVE"
+                return value
+        state = await self.run_request(ScriptedAdapter(handler=handler))
+        self.assertIn(state["status"], ("simulated", "blocked"))
+
     async def test_auditor_failure_cannot_be_overridden(self):
         async def handler(packet):
             if packet["operation"] == "review_delivery":

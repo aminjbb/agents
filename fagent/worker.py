@@ -70,7 +70,9 @@ async def work(task, state, gateway):
                 gateway.event("task_blocked", task_id=task["id"], reason=status)
                 return
             require("changed_files" in result, "Completed tasks must report changed_files")
-            quality = grade(result)
+            # Static implementation evidence can proceed when runtime browser
+            # coverage is unavailable; final review/audit still requires it.
+            quality = grade(result, allow_inconclusive=True)
             if quality != "PASS":
                 task.update(status="changes_required" if quality == "FAIL" else "blocked",
                             feedback="Required execution checks did not pass", block_reason="checks")

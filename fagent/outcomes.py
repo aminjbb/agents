@@ -2,11 +2,14 @@
 from .protocol import evidence, require
 
 
-def grade(response):
+def grade(response, allow_inconclusive=False):
     if evidence(response):
         return "PASS"
     return "FAIL" if any(item["required"] and item["status"] == "FAIL"
-                         for item in response["checks"]) else "INCOMPLETE"
+                         for item in response["checks"]) else (
+                             "PASS" if allow_inconclusive and all(
+                                 not item["required"] or item["status"] in ("PASS", "INCONCLUSIVE")
+                                 for item in response["checks"]) else "INCOMPLETE")
 
 
 def review(response):
