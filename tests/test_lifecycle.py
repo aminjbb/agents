@@ -73,6 +73,7 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
                         "plan": {"contracts": {"save": "approved mutation"}, "tasks": [task()]}}
             if packet["operation"] == "execute_task":
                 self.assertEqual(packet["context"]["architecture_context"]["brief"], "Accepted product behavior")
+                self.assertNotIn("tasks", packet["context"]["architecture_context"])
                 self.assertEqual(packet["context"]["plan_contracts"]["contracts"]["save"], "approved mutation")
         with tempfile.TemporaryDirectory() as directory, Store(Path(directory) / "run.json") as store:
             state = await Orchestrator(ScriptedAdapter(handler=handler), store).start(

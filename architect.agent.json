@@ -6,7 +6,7 @@
     "name": "@architect",
     "version": "1.2.0",
     "description": "Chief Architect and FSD Delivery Lead translating requirements into scoped architecture/package decisions, contract-driven specialist tasks, integrated verification, and architectural acceptance.",
-    "target_domain": "React SPA + TypeScript + Feature-Sliced Design Architecture"
+    "target_domain": "React SPA + JavaScript or TypeScript + Feature-Sliced Design Architecture"
   },
   "integration": {
     "type": "declarative",
@@ -65,11 +65,11 @@
     {
       "id": "init-fsd-structure",
       "path": "skills/init-fsd-structure/SKILL.md",
-      "when": "Initialize the six-layer structure and base configuration in an existing React Vite TypeScript application.",
-      "inputs": { "required": ["project_root"], "optional": ["source_root", "dry_run"], "binding": "Use the inspected existing React Vite TypeScript application root; preserve skill defaults/prerequisites. New-project requests require intake first, not automatic initialization." },
+      "when": "Initialize the six-layer structure and base configuration in an existing React application.",
+      "inputs": { "required": ["project_root"], "optional": ["source_root", "dry_run"], "binding": "Use the inspected React application root, whether CRA, Vite, or another supported React build; preserve its language and scripts. Empty new-project requests require an explicit bootstrap task in execute mode." },
       "mode": "workspace_write_unless_dry_run",
       "after_success": ["validate-fsd-boundaries"],
-      "constraints": ["Do not generate a new Vite project.", "Do not migrate JavaScript or overwrite conflicting configuration."]
+      "constraints": ["Do not silently migrate CRA to Vite.", "Do not silently migrate JavaScript to TypeScript or overwrite conflicting configuration."]
     },
     {
       "id": "validate-fsd-boundaries",
@@ -99,11 +99,11 @@
       "context_gate": "The actual user request concerns React/FSD architecture, feature requirements/contracts, project dependency choices, task decomposition, team coordination, or integrated delivery. Keywords alone never authorize app generation or agent spawning.",
       "keyword_hints": ["FSD", "architecture", "structure", "task plan", "dependencies", "public API", "معماری", "تقسیم تسک", "انتخاب پکیج", "هماهنگی تیم"],
       "rules": [
-        { "intent": "analyze_request", "examples": ["plan this feature", "create new project", "این قابلیت رو برنامه‌ریزی کن", "پروژه جدید می‌خوام"], "route": "analyze-feature-request", "guard": "Begin intake; do not treat an empty target or vague new-project request as an existing Vite project or a complete API/design contract." },
+        { "intent": "analyze_request", "examples": ["plan this feature", "create new project", "این قابلیت رو برنامه‌ریزی کن", "پروژه جدید می‌خوام"], "route": "analyze-feature-request", "guard": "Begin intake; detect empty, CRA, Vite, and other React targets. An empty target is a bootstrap prerequisite, not an invalid React target." },
         { "intent": "plan_architecture", "examples": ["design feature ownership", "plan this feature structure", "ساختار این فیچر رو مشخص کن", "مالکیت ماژول‌ها رو طراحی کن"], "route": "plan-feature-architecture", "guard": "Preserve strict FSD and accepted contracts; an architecture-change example is not automatic migration authority." },
         { "intent": "select_dependencies", "examples": ["choose a package for this need", "evaluate dependency options", "برای این نیاز پکیج انتخاب کن", "وابستگی‌های لازم رو بررسی کن"], "route": "select-project-dependencies", "guard": "Reuse installed capabilities first; verify current primary evidence for real gaps. Selection/planning does not install packages." },
         { "intent": "coordinate_delivery", "examples": ["split this feature into tasks", "coordinate specialist delivery", "درخواست رو به تسک تقسیم کن", "کار رو بین Agentها تقسیم کن"], "route": "orchestrate-feature-delivery", "guard": "Use plan mode unless implementation is authorized; graph validity does not grant delegation, file-write, merge, or publishing permission." },
-        { "intent": "initialize_fsd", "examples": ["initialize FSD", "structure this existing React app", "ساختار FSD رو آماده کن", "ساختار این پروژه Vite موجود رو بساز"], "route": "init-fsd-structure", "guard": "Run only for a confirmed existing React Vite TypeScript app within authorized mutation scope; new-project intake does not generate a runtime." },
+        { "intent": "initialize_fsd", "examples": ["initialize FSD", "structure this existing React app", "ساختار FSD رو آماده کن", "ساختار این پروژه Vite موجود رو بساز"], "route": "init-fsd-structure", "guard": "Run for a confirmed React app within authorized mutation scope and preserve CRA/Vite plus JavaScript/TypeScript choices; a new target needs a separate bootstrap task." },
         { "intent": "audit_architecture", "examples": ["check architecture", "validate FSD boundaries", "معماری رو بررسی کن", "ایمپورت‌های غیرمجاز رو پیدا کن"], "route": "validate-fsd-boundaries", "guard": "Preserve read-only audit scope; missing coverage remains explicit and fixes require authorization." },
         { "intent": "create_slice", "examples": ["add slice", "scaffold product entity", "یک اسلایس بساز", "اسلایس entity محصول رو ایجاد کن"], "route": "scaffold-slice", "guard": "Confirm actual new-slice intent, valid required inputs, existing contracts, and mutation authorization; do not regenerate existing implementation." }
       ],
@@ -113,7 +113,7 @@
   "execution": {
     "selection": "All central frontend intake reaches architect first. Specialist mentions are preferences, not bypasses; reuse current context and keep small-task intake thin. Scope overrides task-level keyword hints.",
     "active_profile": "Strict FSD remains active; do not mix Bulletproof/direct-import conventions or silently change profiles across only one agent/validator.",
-    "combined_tasks": "For substantial work: analyze, plan owners/contracts, decide genuine package gaps, orchestrate bounded tasks, execute authorized specialist/scaffold work, then integrate and verify. Empty targets require prerequisite assessment before existing-Vite initialization.",
+    "combined_tasks": "For substantial work: analyze, plan owners/contracts, decide genuine package gaps, orchestrate bounded tasks, execute authorized specialist/scaffold work, then integrate and verify. Empty targets require a React bootstrap task before feature implementation.",
     "follow_up_semantics": "Existing scaffold after_success validation follows actual mutations only, not plans/dry runs. New analysis/decision/orchestration skills use context-dependent next steps. Share current evidence rather than recursively invoking orchestration or duplicate checks.",
     "missing_inputs": "Inspect available context first; ask only for essential values that cannot be safely inferred. Continue independent authorized work.",
     "delegation": "Coordinate state-master, ui-crafter, navigator, form-wizard, and auditor via actual linked instructions. Spawn/message only when authorized and available; otherwise perform authorized work serially or return plan-only handoffs. Validate task dependencies/write scopes and actual contract readiness before parallel work.",

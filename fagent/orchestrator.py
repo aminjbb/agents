@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .delivery import finalize
 from .gateway import Gateway
-from .plans import prepare, reset_tasks
+from .plans import architect_plan, normalize_architect_response, prepare, reset_tasks
 from .protocol import questions, request, require, text
 from .registry import Registry
 from .scheduler import execute
@@ -12,14 +12,16 @@ from .store import Store
 
 
 class Orchestrator:
-    def __init__(self, adapter, store, registry=None):
+    def __init__(self, adapter, store, registry=None, unlimited_attempts=False):
         self.adapter, self.store = adapter, store
         self.registry = registry or Registry()
+        self.unlimited_attempts = unlimited_attempts
 
     def bind(self, state):
         self.state = state
         self.gateway = Gateway(self.adapter, self.registry, state, self.store.save)
         state["simulation"] = state.get("simulation", False) or self.adapter.simulation
+        state["unlimited_attempts"] = self.unlimited_attempts
 
     async def start(self, data):
         state = {"protocol_version": "1.0", "request": request(data), "status": "intake",
@@ -47,13 +49,13 @@ class Orchestrator:
             if state["plan"]:
                 waiting = [task["id"] for task in state["plan"]["tasks"] if task.get("questions")]
                 if waiting:
-                    reset_tasks(state, waiting)
+                    reset_tasks(state, waiting, fresh_attempt_window=True)
             state["questions"] = []
         elif state["questions"]:
             return state
         if retry_tasks:
             require(state["plan"] is not None, "No task plan to retry")
-            reset_tasks(state, retry_tasks)
+            reset_tasks(state, retry_tasks, fresh_attempt_window=True)
         if authorize_execute:
             state["request"]["mode"] = "execute"
             if state["plan"]:
@@ -67,7 +69,8 @@ class Orchestrator:
         try:
             if state["plan"] is None:
                 state["status"] = "intake"
-                result = await gateway.invoke("@architect", "plan", {"questions": state["questions"]})
+                result = normalize_architect_response(
+                    await gateway.invoke("@architect", "plan", {"questions": state["questions"]}))
                 if result.get("status") == "needs_input":
                     state.update(status="needs_input", questions=questions(result.get("questions")))
                     gateway.event("input_required")
@@ -78,7 +81,7 @@ class Orchestrator:
                     return state
                 require(result.get("status") == "planned", "Invalid architect planning status")
                 state["planning"] = result
-                state["plan"], state["plan_validation"] = prepare(result.get("plan"), state["request"])
+                state["plan"], state["plan_validation"] = prepare(architect_plan(result), state["request"])
                 for task in state["plan"]["tasks"]:
                     require(task["owner"] in self.registry.agents, "Planned agent unavailable")
                 gateway.event("plan_validated")
@@ -102,7 +105,10 @@ class Orchestrator:
 
     async def execute_plan(self):
         state, gateway = self.state, self.gateway
-        for _ in range(state["request"]["max_attempts"] + 1):
+        rounds = None if self.unlimited_attempts else state["request"]["max_attempts"] + 1
+        round_number = 0
+        while rounds is None or round_number < rounds:
+            round_number += 1
             state["status"] = "executing"
             gateway.event("execution_started")
             await execute(state, gateway)

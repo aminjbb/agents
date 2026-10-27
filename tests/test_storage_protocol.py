@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fagent.orchestrator import Orchestrator
 from fagent.paths import canonical, changed_files, conflicting
-from fagent.protocol import ProtocolError, checks, request
+from fagent.protocol import ProtocolError, checks, normalize_agent_response, request
 from fagent.store import Store
 from helpers import ScriptedAdapter
 
@@ -64,6 +64,19 @@ class StorageProtocolTests(unittest.TestCase):
             checks([{**value[0], "status": "N/A"}])
         with self.assertRaises(ProtocolError):
             checks([])
+
+    def test_check_status_aliases_are_normalized(self):
+        value = [{"name": "typecheck", "required": True, "status": "passed_with_open_decisions",
+                  "evidence": "Verified by the task agent"}]
+        self.assertFalse(checks(value))
+        self.assertEqual(value[0]["status"], "INCONCLUSIVE")
+
+    def test_nested_completed_response_is_flattened(self):
+        value = normalize_agent_response({"status": "completed", "completed": {
+            "summary": "Inspected", "evidence": [], "changed_files": []}})
+        self.assertEqual(value["status"], "completed")
+        self.assertEqual(value["summary"], "Inspected")
+        self.assertNotIn("completed", value)
 
 
 class ProjectLeaseTests(unittest.IsolatedAsyncioTestCase):

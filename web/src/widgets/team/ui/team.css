@@ -1,0 +1,20 @@
+.team-section > .panel-heading { margin-bottom: 16px; }
+.team-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.agent-card { padding: 17px 14px; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; min-width: 0; }
+.agent-card.working { border-color: var(--accent); }
+.agent-card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 16px; }
+.avatar { display: inline-grid; place-items: center; flex-shrink: 0; height: 38px; width: 38px; border-radius: 11px; font: 600 19px 'Segoe UI', sans-serif; border: 1px solid #637b50; background: #33412d; color: #d7f6a9; }
+.avatar.ui-crafter { background: #3e3143; border-color: #86658c; color: #e6b8f4; }
+.avatar.form-wizard { background: #43392a; border-color: #8a744d; color: #f1d69e; }
+.avatar.state-master { background: #263b44; border-color: #4e8295; color: #a8dcf2; }
+.avatar.navigator { background: #3c3029; border-color: #9b7155; color: #f2b995; }
+.avatar.auditor { background: #293b37; border-color: #4e8275; color: #a6e6d4; }
+.agent-status { font-size: .6rem; color: var(--muted); }
+.agent-status::before { content: ''; display: inline-block; width: 5px; height: 5px; background: #96aa9d; border-radius: 50%; margin-inline-end: 4px; }
+.agent-status.active { color: var(--accent); }
+.agent-status.active::before { background: var(--accent); }
+.agent-card h3 { font-size: .75rem; }
+.agent-handle { font: .65rem/1.8 Consolas, monospace; color: var(--muted); display: inline-block; }
+.agent-card p { font-size: .65rem; color: var(--muted); margin-top: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-width: 1440px) { .team-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

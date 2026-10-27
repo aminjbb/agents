@@ -1,19 +1,19 @@
 ---
 name: init-fsd-structure
-description: Initialize the six-layer FSD source structure and base configuration in an existing React Vite TypeScript project. Use for initial architecture setup, not new application generation or wholesale migration.
+description: Initialize the six-layer FSD source structure and base configuration in an existing React application. Preserve CRA/Vite and JavaScript/TypeScript choices; use a separate authorized bootstrap task for an empty target.
 ---
 
 # Initialize FSD Structure
 
 <purpose>
 
-Prepare an existing React Vite project for @architect's six-layer FSD policy while preserving its current behavior. This skill explicitly creates all six base layer directories; it does not create speculative business slices.
+Prepare an existing React project (CRA, Vite, or equivalent) for @architect's six-layer FSD policy while preserving its current behavior. This skill explicitly creates all six base layer directories; it does not create speculative business slices.
 
 </purpose>
 
 <inputs>
 
-- Required: `project_root`, the existing React Vite application's root directory.
+- Required: `project_root`, the existing React application's root directory.
 - Optional: `source_root`, defaulting to the existing configured source directory or `src`.
 - Optional: `dry_run`, default `false`; when true, report planned changes without mutation.
 
@@ -26,8 +26,8 @@ Read applicable repository instructions and the architect policy if available. D
 ## 1. Inspect and establish scope
 
 1. Resolve the project and source roots to absolute paths. Verify all proposed writes remain within the authorized project, including through symlinks or junctions.
-2. Inspect `package.json`, the lockfile, Vite configuration, TypeScript project references, HTML entry, entry module, existing application component, aliases, and Git/workspace changes.
-3. Confirm this is an existing React Vite TypeScript application. If the target is empty, another framework, or JavaScript-only, report the unsupported prerequisite; do not silently create a project or perform a language migration.
+2. Inspect `package.json`, the lockfile, build configuration (for example Vite or CRA scripts), TypeScript project references when present, HTML entry, entry module, existing application component, aliases, and Git/workspace changes.
+3. Confirm this is an existing React application and record whether it uses CRA, Vite, and JavaScript or TypeScript. If the target is empty, return a bootstrap prerequisite for an authorized caller; do not silently migrate the language or build.
 4. Identify the TypeScript config that actually includes application files. A root config containing only `references` is not sufficient for application path mappings.
 5. Inventory collisions. Preserve existing files and uncommitted changes. Compatible structure is reused; incompatible ownership or conflicting aliases require a concrete conflict report before dependent writes.
 
@@ -89,8 +89,8 @@ export { App } from "./App";
 
 ## 4. Merge base configuration
 
-1. Preserve the existing React plugin, scripts, compiler settings, test settings, and Vite options. Edit structured configuration without flattening project references or erasing comments unnecessarily.
-2. Reuse an equivalent source alias when one exists. Otherwise configure `@` for the source root in both the application TypeScript resolver and Vite. Do not create a conflicting second alias definition.
+1. Preserve the existing React plugin or CRA scripts, compiler settings when present, test settings, and build options. Edit structured configuration without flattening project references or erasing comments unnecessarily.
+2. Reuse an equivalent source alias when one exists. Otherwise configure `@` only when the existing build supports it without a new override; otherwise keep relative imports. Do not create a conflicting second alias definition.
 3. For a source root `src` beside the application config, merge this mapping into its `compilerOptions`:
 
 ```json
@@ -116,7 +116,7 @@ import { fileURLToPath, URL } from "node:url";
 
 Use the existing config module format and Node type setup. Preserve ordered alias arrays. Existing working resolver plugins may be retained. Do not depend on a newer Vite option unless the installed version supports it.
 
-TypeScript paths alone do not configure bundler resolution. See [TypeScript paths](https://www.typescriptlang.org/tsconfig/paths.html) and [Vite aliases](https://vite.dev/config/shared-options#resolve-alias).
+TypeScript paths alone do not configure bundler resolution. See [TypeScript paths](https://www.typescriptlang.org/tsconfig/paths.html) and the existing build documentation; do not add Vite configuration to a CRA project.
 
 5. Do not install routers, state libraries, request libraries, or new lint stacks as part of this scaffold. Existing strictness MUST NOT be weakened. Automated boundary enforcement is a separate implementation task unless explicitly requested.
 

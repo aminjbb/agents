@@ -63,13 +63,37 @@ def checks(value):
         require(name not in seen, "Duplicate check name")
         seen.add(name)
         require(type(item.get("required")) is bool, "Check required must be boolean")
-        require(item.get("status") in ("PASS", "FAIL", "NOT_RUN", "INCONCLUSIVE", "N/A"),
+        status = item.get("status")
+        if isinstance(status, str):
+            status = {"passed": "PASS", "pass": "PASS", "failed": "FAIL", "fail": "FAIL",
+                      "not_run": "NOT_RUN", "not-run": "NOT_RUN", "incomplete": "INCONCLUSIVE",
+                      "inconclusive": "INCONCLUSIVE", "passed_with_open_decisions": "INCONCLUSIVE",
+                      "n/a": "N/A"}.get(
+                          status.strip().lower(), status.strip().upper())
+            item["status"] = status
+        require(status in ("PASS", "FAIL", "NOT_RUN", "INCONCLUSIVE", "N/A"),
                 "Invalid check status")
         text(item.get("evidence"), "check evidence")
         if item["status"] == "N/A":
             require(not item["required"], "Required checks cannot be N/A")
     require(any(item["required"] for item in value), "At least one check must be required")
     return all(not item["required"] or item["status"] == "PASS" for item in value)
+
+
+def normalize_agent_response(value):
+    """Flatten the common status-plus-payload envelope emitted by agents."""
+    require(isinstance(value, dict), "Agent response must be an object")
+    status = value.get("status")
+    if not isinstance(status, str):
+        return value
+    status = status.strip().lower()
+    payload = value.get(status)
+    if isinstance(payload, dict):
+        merged = {**payload, **{key: item for key, item in value.items()
+                                if key not in (status, "status")}}
+        merged["status"] = status
+        return merged
+    return {**value, "status": status}
 
 
 def evidence(response):

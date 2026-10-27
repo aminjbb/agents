@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 .fagent/
+web/node_modules/
+web/dist/
+web/*.tsbuildinfo

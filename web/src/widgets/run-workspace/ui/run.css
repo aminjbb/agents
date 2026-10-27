@@ -1,0 +1,29 @@
+.run-brief h2 { font-size: 1.05rem; margin-bottom: 14px; white-space: pre-wrap; }
+.project-path { font: .72rem/1.8 Consolas, monospace; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-bottom: 18px; }
+.lead-summary { border-inline-start: 2px solid var(--accent); padding-inline-start: 16px; margin-top: 18px; white-space: pre-wrap; font-size: .83rem; }
+.run-brief > .muted { margin-top: 20px; }
+.task-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.task-card { min-width: 0; background: #111719; border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.task-meta { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 12px; }
+.task-meta code { color: var(--muted); font-size: .7rem; }
+.tag[data-status='done'] { color: var(--accent); border-color: #637b50; }
+.tag[data-status='running'] { color: #a8dcf2; border-color: #4e8295; }
+.tag[data-status='blocked'], .tag[data-status='failed'] { color: var(--error); border-color: #a46860; }
+.task-card > p { font-size: .76rem; color: var(--muted); margin-top: 10px; }
+.task-dependencies { font-size: .7rem; padding: 12px 0; margin-top: 10px; border-top: 1px solid var(--border); }
+.task-card li { font-size: .75rem; line-height: 1.9; margin-bottom: 8px; }
+.task-card ul { padding-inline-start: 16px; }
+.scope-path { display: block; margin: 8px 0; font-size: .7rem; color: var(--muted); }
+.task-card .evidence { margin-top: 10px; }
+.approval { border: 1px solid #637b50; background: #1d281d; border-radius: 12px; padding: 22px; display: flex; flex-direction: column; align-items: start; gap: 16px; }
+.approval strong { font-size: .87rem; }
+.approval p { margin-top: 8px; }
+.review-results { display: grid; gap: 12px; }
+.review-results:empty { display: none; }
+.event-list { padding: 0; margin: 0; list-style: none; max-height: 420px; overflow-y: auto; }
+.event-list li { display: flex; align-items: start; gap: 12px; padding: 14px 0; border-top: 1px solid var(--border); }
+.event-dot { margin-top: 7px; width: 7px; height: 7px; border-radius: 50%; border: 1px solid #c9f49a; flex-shrink: 0; }
+.event-list strong { font-size: .75rem; }
+.event-list p { font-size: .69rem; color: var(--muted); }
+.event-list time { font-size: .65rem; color: var(--muted); margin-inline-start: auto; flex-shrink: 0; padding-top: 2px; }
+@media (max-width: 600px) { .task-grid { grid-template-columns: 1fr; } .event-list li { gap: 8px; } }

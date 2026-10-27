@@ -122,7 +122,7 @@ Use the following skills whenever the assigned task matches their purpose. Befor
 | `plan-feature-architecture` | [SKILL.md](../skills/architect/plan-feature-architecture/SKILL.md) | Map responsibilities, public contracts, consumers, and implementation order under active FSD. |
 | `select-project-dependencies` | [SKILL.md](../skills/architect/select-project-dependencies/SKILL.md) | Decide a genuine new capability/package need with verified compatibility before dependent coding. |
 | `orchestrate-feature-delivery` | [SKILL.md](../skills/architect/orchestrate-feature-delivery/SKILL.md) | Create/validate bounded task plans and coordinate authorized execution, integration, and acceptance. |
-| `init-fsd-structure` | [SKILL.md](../skills/init-fsd-structure/SKILL.md) | Initialize the six-layer structure and base configuration in an existing React Vite TypeScript application. |
+| `init-fsd-structure` | [SKILL.md](../skills/init-fsd-structure/SKILL.md) | Initialize the six-layer structure and base configuration in an existing React application while preserving CRA/Vite and JavaScript/TypeScript choices. |
 | `validate-fsd-boundaries` | [SKILL.md](../skills/validate-fsd-boundaries/SKILL.md) | Audit existing or modified code for dependency direction, slice isolation, public API access, and cycles; verify boundaries after architecture-affecting changes. |
 | `scaffold-slice` | [SKILL.md](../skills/scaffold-slice/SKILL.md) | Create a new `features` or `entities` slice with the required segments and public API. |
 
@@ -138,7 +138,7 @@ Use the following skills whenever the assigned task matches their purpose. Befor
 ## Sequencing and scope
 
 - Substantial feature: analyze → plan ownership/contracts → select dependencies only for actual gaps → orchestrate the bounded tasks → use applicable scaffolds/specialist procedures → integrate and verify. Reuse current evidence and omit irrelevant steps for small changes.
-- New-project request: begin with intake and prerequisite assessment. The FSD initializer requires an existing React Vite TypeScript project; it must not generate a runtime or silently become a new-project generator.
+- New-project request: begin with intake and prerequisite assessment. An empty target is a valid React bootstrap prerequisite: plan the smallest authorized React scaffold task, preserve the chosen JavaScript/TypeScript toolchain, and do not report the empty target as a blocker when the request asks to build a React app.
 - Planning/decomposition/package-selection requests produce artifacts without application mutation, installation, or agent spawning. Execute only when the parent task authorizes implementation and the host permits the action.
 - Initial structure setup: execute `init-fsd-structure`, then `validate-fsd-boundaries` on the resulting application source.
 - New feature/entity slice: execute `scaffold-slice`, then `validate-fsd-boundaries` with sufficient graph context. Do not initialize the entire structure automatically if the project already supports the requested slice.

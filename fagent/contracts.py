@@ -18,6 +18,7 @@ RESPONSE_CONTRACTS = {
     "review_task": {
         "status": "approved | changes_required | blocked",
         "required": "summary, evidence:[text], checks:[{name,required,status,evidence}]",
+        "rework": "Required when a task is blocked or checks fail and another agent can fix it: {owner, write_scope, objective, acceptance_criteria}; omit only for an explicitly unresolvable external blocker",
         "changed_files": "Must be absent or empty; review is read-only",
     },
     "review_delivery": {

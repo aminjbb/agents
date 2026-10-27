@@ -1,0 +1,22 @@
+.button { min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid transparent; font-size: .78rem; font-weight: 600; line-height: 1.6; }
+.button.primary { background: var(--accent); color: #172018; }
+.button.primary:hover:not(:disabled) { background: #ddffb6; }
+.button.secondary { background: var(--raised); border-color: var(--border); color: var(--text); }
+.button.secondary:hover:not(:disabled) { border-color: var(--muted); }
+.field { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.field label { font-size: .77rem; line-height: 1.8; color: #dce5df; }
+.field input, .field textarea, .field select { width: 100%; min-width: 0; color: var(--text); background: #111719; border: 1px solid #46565b; border-radius: 8px; padding: 12px 14px; font-size: .85rem; line-height: 1.9; }
+.field textarea { resize: vertical; min-height: 100px; }
+.field input::placeholder, .field textarea::placeholder { color: #8da19f; opacity: 1; }
+.field [aria-invalid='true'] { border-color: var(--error); }
+.field :disabled { opacity: .65; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.form-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.connection-panel { padding: 20px; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; }
+.connection-panel summary { display: flex; align-items: center; gap: 10px; font-size: .8rem; }
+.connection-panel summary .muted { margin-inline-start: auto; font-size: .65rem; }
+.connection-panel .stack { margin-top: 18px; }
+.lead-message { display: flex; align-items: start; gap: 14px; padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.lead-message strong { font-size: .85rem; }
+.lead-message p { color: var(--muted); font-size: .8rem; margin-top: 7px; }
+@media (max-width: 600px) { .form-footer { align-items: stretch; flex-direction: column; } }

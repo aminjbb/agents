@@ -2,7 +2,7 @@
 
 FAgent now has an executable Python coordinator using only the standard library (Python 3.11+). Every request submitted through this runtime starts with `@architect`, including text that explicitly mentions another agent. The architect plans/questions first; specialists receive only planned tasks. Direct IDE chats outside this entry point are not intercepted.
 
-The runtime does not ship a model-provider or IDE-specific bridge. It includes a real subprocess adapter for a trusted host command implementing the JSON protocol below. That bridge supplies model/tool access and must enforce filesystem, network, approval, and process-lifecycle restrictions. No missing bridge silently falls back to simulation.
+The command-adapter CLI includes a real subprocess adapter for a trusted host command implementing the JSON protocol below. The [local React control room](control-room.md) additionally supplies a Codex App Server bridge. Each bridge supplies model/tool access and owns filesystem, network, approval, and process-lifecycle restrictions. No missing bridge silently falls back to simulation.
 
 ## Start with a concrete host bridge
 
@@ -26,7 +26,7 @@ python -m fagent start --project-root D:/project/my-app --text "Build the reques
 
 The default mode is `plan`. After architect intake/clarification and structural validation, the run stops at `planned` without dispatching implementation tasks. A plan is not an execution grant.
 
-For an already-authorized implementation request, add `--mode execute`; concurrency defaults to 3 and is configurable with `--max-parallel` (1..16). `--max-attempts` (1..5, default 2) bounds code/review rework per task. The runtime does not estimate tokens or billable cost; the host bridge owns provider limits.
+For an already-authorized implementation request, add `--mode execute`; concurrency defaults to 3 and is configurable with `--max-parallel` (1..16). `--max-attempts` (1..5, default 2) bounds code/review rework per task in both CLI and web control room. After the cap, the failure is surfaced to Tech Lead for an explicit rework assignment instead of looping indefinitely. A user-triggered retry starts a fresh bounded window while retaining prior attempts in task history, so an exhausted run remains recoverable. The runtime does not estimate tokens or billable cost; the host bridge owns provider limits.
 
 Explicitly execute an existing planned run:
 
@@ -36,6 +36,12 @@ python -m fagent status --state .fagent/runs/product.json
 ```
 
 Use `status --full` to inspect the plan, task results/reviews, check evidence, audit/acceptance, and ordered timestamped events. Run files contain the request, answers, and agent-reported evidence; store them appropriately. Default CLI summaries do not print complete prompts or adapter arguments.
+
+When an execution or review check fails, the coordinator sends the failure
+evidence back to `@architect`. Architect may return a bounded `rework` object
+with a new owner and exact write scope; the task is then reassigned and retried
+with the failure attached to its context. Without an explicit rework assignment,
+the task remains blocked and its dependents do not run.
 
 ## Clarification and resuming
 
@@ -91,7 +97,7 @@ Packet fields:
 | `protocol_version` | `1.0` |
 | `agent`, `operation` | Selected role and bounded operation |
 | `request` | Original text, canonical project root, plan/execute mode, limits, answers/history |
-| `allowed_write_scope` | Project-relative file paths or directory prefixes ending in `/`; empty means read-only |
+| `allowed_write_scope` | Project-relative file paths or directory prefixes ending in `/`; empty means read-only. Architect's finite `vite.config.*` and `tsconfig*.json` families are expanded to explicit config filenames before execution. |
 | `definition` | Actual manifest, instruction, skill definitions, and package root |
 | `context` | Task/prerequisite results, shared architect brief/decisions, plan contracts, review or audit inputs as applicable |
 | `response_contract` | Operation-specific transport envelope requirements |
@@ -155,7 +161,7 @@ The runtime rechecks resolved declared scopes and rejects paths escaping the tar
 
 If a process crashes, a lock may remain. Inspect the recorded PID/process and actual side effects before manually removing a stale lock. Resume does not replay running tasks automatically; use explicit retry after inspection. Cancellation persists interrupted tasks as blocked when cleanup can run. Interrupted subprocess descendants require host cleanup; do not remove locks while they still operate.
 
-The first version uses a fixed task graph with bounded retries. It does not provide a visual inbox, provider-specific adapters, distributed scheduling, automatic conflict resolution, release/merge automation, or interception of arbitrary IDE messages.
+The coordinator uses a fixed task graph with bounded retries. The separate [control room](control-room.md) provides visual intake, task tracking and a Codex adapter. Distributed scheduling, automatic conflict resolution, release/merge automation and interception of arbitrary IDE messages remain outside this runtime.
 
 ## Verification
 

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from .contracts import RESPONSE_CONTRACTS
 from .paths import changed_files, scope_keys
-from .protocol import require
+from .protocol import normalize_agent_response, require
 
 
 class Gateway:
@@ -39,11 +39,14 @@ class Gateway:
                   "definition": self.registry.packet(owner), "context": context}
         self.event("agent_started", agent=owner, operation=operation,
                    task_id=context.get("task", {}).get("id"))
-        response = await self.adapter.invoke(packet)
-        require(isinstance(response, dict), "Adapter response must be an object")
-        require(type(response.get("simulation", False)) is bool, "Invalid simulation response flag")
-        if response.get("simulation"):
-            self.state["simulation"] = True
-        changed_files(req["project_root"], write_scope, response.get("changed_files", []))
-        self.event("agent_finished", agent=owner, operation=operation)
-        return response
+        try:
+            response = normalize_agent_response(await self.adapter.invoke(packet))
+            require(isinstance(response, dict), "Adapter response must be an object")
+            require(type(response.get("simulation", False)) is bool, "Invalid simulation response flag")
+            if response.get("simulation"):
+                self.state["simulation"] = True
+            changed_files(req["project_root"], write_scope, response.get("changed_files", []))
+            return response
+        finally:
+            # Invocation lifecycle must stay balanced on failure, cancellation and retry.
+            self.event("agent_finished", agent=owner, operation=operation)

@@ -93,7 +93,9 @@ class OrchestrationTests(unittest.IsolatedAsyncioTestCase):
         adapter = ScriptedAdapter(handler=handler)
         state = await self.run_request(adapter)
         self.assertEqual(state["status"], "blocked")
-        self.assertNotIn("review_task", [p["operation"] for p in adapter.calls])
+        # Required-check failures are now surfaced to Tech Lead for optional
+        # rework assignment before the task remains blocked.
+        self.assertIn("review_task", [p["operation"] for p in adapter.calls])
 
     async def test_auditor_failure_cannot_be_overridden(self):
         async def handler(packet):

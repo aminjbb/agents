@@ -2,6 +2,15 @@
 
 Agent instructions and an executable architect-first coordinator for a React SPA engineering workflow governed by Feature-Sliced Design.
 
+## Visual control room
+
+The local React control room adds a visual team, a Tech Lead meeting, clarification
+forms, plan approval, task progress and verification evidence. It uses the existing
+six agent definitions and the real Codex App Server adapter. Start with
+`cd web`, `npm ci`, `npm run build`, then from the repository root run
+`python -m fagent.web` and open **http://127.0.0.1:8765**.
+See [setup, credentials, architecture and limitations](docs/control-room.md).
+
 The first agent is [@architect — Chief Architect & FSD Delivery Lead](prompts/architect.md), version 1.2.0. It receives every frontend request submitted through the central runtime, then handles requirements/questions, strict-FSD ownership/public contracts, package choices, specialist task plans, integrated verification, and architectural acceptance. Its seven skills are bound in [architect.agent.json](architect.agent.json).
 
 The second agent is [@state-master — State & Data Management Expert](prompts/state-master.md). Its instruction enforces TanStack Query v5 for server state, Redux Toolkit for global client state, local UI state ownership, and FSD-compliant integration. [state-master.agent.json](state-master.agent.json) binds its three canonical skill procedures, English/Persian triggers, and analysis versus implementation modes.
@@ -18,7 +27,7 @@ The sixth agent is [@auditor — Senior Reviewer](prompts/auditor.md). It indepe
 
 [frontend.entry.json](frontend.entry.json) defines architect-first intake for all frontend requests in the [Python coordinator](fagent/orchestrator.py). Ready independent tasks run concurrently; overlapping canonical write scopes are serialized, and dependencies wait for actual task approval. A blocked branch does not stop independent work. Clarifications, bounded retries, independent quality review, and final architectural acceptance are persisted.
 
-Run `python -m fagent --help` from this repository. Python 3.11+ and its standard library are sufficient. A real host bridge command must be configured before agent execution; there is no silent mock/provider fallback. See [setup, CLI, response protocol, and limitations](docs/orchestration.md).
+Run `python -m fagent --help` from this repository. Python 3.11+ and its standard library are sufficient for the coordinator. The command-adapter CLI requires a real host bridge command; the visual control room supplies the included Codex adapter. There is no silent mock/provider fallback. See [CLI, response protocol, and limitations](docs/orchestration.md).
 
 ```powershell
 python -m fagent start --project-root D:/project/my-app --text "Build the requested feature" --adapter-config D:/tools/adapter.json --state .fagent/runs/feature.json
@@ -67,7 +76,7 @@ The architect has four leadership/planning skills and three existing structural 
 - [plan-feature-architecture](skills/architect/plan-feature-architecture/SKILL.md): map current FSD owners, public contracts, consumers, state authority, and integration order without speculative scaffolding.
 - [select-project-dependencies](skills/architect/select-project-dependencies/SKILL.md): reuse installed capabilities or record a verified compatible dependency decision before dependent code; selection itself installs nothing.
 - [orchestrate-feature-delivery](skills/architect/orchestrate-feature-delivery/SKILL.md): create bounded task dependencies/write scopes and coordinate authorized specialist execution, integration, and acceptance.
-- [init-fsd-structure](skills/init-fsd-structure/SKILL.md): initialize six FSD layers and merge base configuration in an existing React Vite TypeScript project.
+- [init-fsd-structure](skills/init-fsd-structure/SKILL.md): initialize six FSD layers and merge base configuration in an existing React project while preserving CRA/Vite and JavaScript/TypeScript choices.
 - [validate-fsd-boundaries](skills/validate-fsd-boundaries/SKILL.md): audit module references, public APIs, layer direction, slice isolation, and dependency cycles.
 - [scaffold-slice](skills/scaffold-slice/SKILL.md): generate a feature or entity skeleton with four segments and an explicit public API.
 
@@ -75,7 +84,7 @@ Load the relevant `SKILL.md` alongside the architect prompt when performing that
 
 The orchestration skill includes a [task-plan structural validator](skills/architect/orchestrate-feature-delivery/scripts/validate_task_plan.py) for IDs, owners, dependency cycles/status readiness, and unordered overlapping write scopes. Run it with `python <validator-path> <task-plan.json>`. It does not execute agents, inspect real filesystem links/contracts, grant permissions, or prove application behavior. [Coordination cases](skills/architect/orchestrate-feature-delivery/references/coordination-cases.md) cover ambiguous requests, small edits, multi-owner features, dependency reuse, and architecture conflicts.
 
-Strict FSD remains the active profile across all agents; Bulletproof React is not silently mixed into its import/folder policy. New-project requests begin with intake, while the existing initializer still requires a React Vite TypeScript application. Plan/decomposition requests do not install packages or launch agents; actual parallel work requires host/task authorization and compatible disjoint scopes.
+Strict FSD remains the active profile across all agents; Bulletproof React is not silently mixed into its import/folder policy. New-project requests begin with intake and may schedule an authorized React bootstrap; existing React apps preserve their CRA/Vite and JavaScript/TypeScript choices. Plan/decomposition requests do not install packages or launch agents; actual parallel work requires host/task authorization and compatible disjoint scopes.
 
 ## State management skills
 
@@ -138,7 +147,7 @@ The form instruction and manifest route matching work to these procedures. They 
 
 ## Scope
 
-This repository contains agent instructions plus a tested local orchestration core and JSON-over-stdio command adapter. It does not contain a React application or a provider-specific model/IDE bridge. A configured trusted host command supplies actual agent/tool execution; the coordinator itself validates protocols, schedules declared work, persists state, and enforces evidence gates.
+This repository contains agent instructions, a local orchestration core, a JSON-over-stdio command adapter, and a React control room with a local Codex App Server bridge. The command-adapter CLI still supports custom trusted host commands. The coordinator validates protocols, schedules declared work, persists state, and enforces evidence gates. See [control-room boundaries](docs/control-room.md) for the included bridge's sandbox and authentication limits.
 
 The 150-line source limit, prohibition of all sibling entity imports, and agent acceptance workflow are project policies. They deliberately make this configuration stricter than baseline FSD. Prose instruction files are outside the source-file limit.
 
