@@ -10,6 +10,31 @@ from recovery_helpers import failure, repair, verified
 
 
 class RecoveryConflictTests(unittest.IsolatedAsyncioTestCase):
+    async def test_repair_invalidating_its_prerequisite_rescans_ready_work(self):
+        fixed = False
+
+        async def handler(packet):
+            nonlocal fixed
+            operation, context = packet["operation"], packet["context"]
+            if operation == "execute_task":
+                current = context["task"]
+                if current.get("recovery"):
+                    fixed = True
+                    return verified(status="completed", changed_files=[])
+                if current["id"] == "FORM" and not fixed:
+                    return failure()
+            if operation == "review_task":
+                return repair(write_scope=["src/provider/"]) if context.get("failure") else verified(status="approved")
+        tasks = [task("PROVIDER", scopes=["src/provider/"]), task("FORM", deps=["PROVIDER"]), task("OTHER")]
+        adapter = ScriptedAdapter(tasks, handler)
+        with tempfile.TemporaryDirectory() as directory, Store(Path(directory) / "run.json") as store:
+            state = await asyncio.wait_for(Orchestrator(adapter, store).start(
+                {"project_root": directory, "text": "Build", "mode": "execute", "max_attempts": 1}), 3)
+            self.assertEqual(state["status"], "simulated")
+            self.assertTrue(all(item["status"] == "done" for item in state["plan"]["tasks"]))
+            counts = {item["id"]: item["attempts"] for item in state["plan"]["tasks"]}
+            self.assertEqual(counts, {"PROVIDER": 2, "FORM": 2, "OTHER": 1, "FORM-repair-1": 1})
+
     async def test_two_repairs_of_same_file_do_not_reapply_each_others_fixes(self):
         fixed = set()
 

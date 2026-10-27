@@ -18,7 +18,7 @@ export function TaskBoard({ tasks }: { tasks: Task[] }) {
       {task.recovery && <p>رفع مانع برای <a href={`#task-${task.recovery.parent_id}`}><bdi>{task.recovery.parent_id}</bdi></a></p>}
       {task.active_repair && <p>منتظر تأیید تعمیر <a href={`#task-${task.active_repair}`}><bdi>{task.active_repair}</bdi></a></p>}
       {task.feedback && <p>{task.feedback}</p>}
-      {(task.recovery_error || task.error) && <p>{task.recovery_error || task.error}</p>}
+      {task.status !== 'done' && (task.recovery_error || task.error) && <p>{task.recovery_error || task.error}</p>}
       {!!task.blockers?.length && <details><summary>تاریخچهٔ موانع و تعمیرها</summary>
         <ul>{task.blockers.map((blocker) => <li key={blocker.id}>
           <p>{blocker.summary}</p><bdi>{blocker.category} · {blocker.status}</bdi>

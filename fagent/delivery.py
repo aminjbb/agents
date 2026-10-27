@@ -21,7 +21,9 @@ async def finalize(state, gateway):
     retry = decision.get("retry_tasks", [])
     strings(retry, "retry_tasks")
     require(len(retry) == len(set(retry)), "Duplicate retry tasks")
-    if retry and state["status"] == "changes_required":
+    # Scheduling missing evidence is not acceptance. INCOMPLETE remains a veto
+    # until the requested work and a fresh integrated review actually pass.
+    if retry and decision["status"] != "blocked":
         for task in state["plan"]["tasks"]:
             if task["id"] in retry:
                 task["feedback"] = decision["summary"]
@@ -31,6 +33,7 @@ async def finalize(state, gateway):
             state["error"] = str(error)
             gateway.event("rework_blocked", reason=str(error))
             return False
+        state["status"] = "changes_required"
         gateway.event("rework_scheduled", task_ids=sorted(selected))
         return True
     gateway.event("delivery_not_accepted", status=state["status"])

@@ -13,6 +13,7 @@ async def work(task, state, gateway):
         gateway.event("task_attempt_limit", task_id=task["id"])
         return
     archive_task(task)
+    task.pop("recovery_error", None)
     task.update(status="running", attempts=task["attempts"] + 1, error=None, result=None, review=None)
     gateway.event("task_running", task_id=task["id"], attempt=task["attempts"])
     try:

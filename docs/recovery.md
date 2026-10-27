@@ -76,11 +76,17 @@ The Python coordinator validates evidence structure and exact named outcomes; it
 
 ## Budgets, repeated failure, retry and interruption
 
+Planner tasks are rebuilt from an explicit allowlist before execution: `id`, `owner`, `objective`, `deliverable`, `depends_on`, `write_scope`, `acceptance_criteria`, initial `status`, and descriptive `contracts`, `checks`, `inputs`, `outputs`, `metadata`, `context`, `constraints`, `handoff`, `skills`, `read_scope`, `evidence`. Unknown task fields are discarded; put extensions in `metadata` or `context`. Descriptive context does not grant execution permissions. Top-level plan contracts/metadata are preserved.
+
+Attempt counts, budget allowances, repair links, blocker records, diagnostic flags and errors are created by the coordinator, never copied from a planner task. This boundary also applies when a proposed repair graph is validated; existing runtime state is retained separately from the sanitized validation copy.
+
 `max_attempts` bounds ordinary attempts and the number of automatic repairs per original task in a retry window. Each verified repair grants one additional original-task execution so an attempt-limit boundary cannot prevent resumption. Repair attempts are separately bounded. Same-contract retries return to the scheduler. The legacy `unlimited_attempts` constructor flag no longer disables these limits or delivery review limits.
 
 A repair cannot spawn another repair. The lead may supply `retry_strategy` describing a concrete corrective action within the repair's existing contract and remaining attempt budget. The same unchanged blocker stops automatic recovery even if another strategy is proposed. A newly discovered distinct blocker may receive a separate repair within the original task's repair budget.
 
 An explicit user retry starts a fresh bounded window, retaining prior attempts and blockers. Retrying an original task also resets its incomplete repair prerequisites and dependent consumers; already verified independent work is retained. A plain resume does not reset budgets or replay interrupted workers.
+
+Before resetting a task or starting its next attempt, archive the prior result/review/errors, including `recovery_error`, then clear the current recovery error. Error-only attempts are archived too. Blocker history remains available, and the control room does not present old errors as current failures on completed tasks.
 
 ```powershell
 python -m fagent resume --state .fagent/runs/product.json --adapter-config D:/tools/adapter.json --retry FORM

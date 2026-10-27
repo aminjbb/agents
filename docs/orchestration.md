@@ -81,7 +81,7 @@ The selected task, its incomplete repair prerequisites and dependent consumers l
 - Each completed task must report changed files, nonempty evidence and named checks with at least one required check. Required checks must pass before completion can be approved.
 - Task changes requested by architect are retried within the attempt budget. There is no blind retry of arbitrary failed external operations.
 - After all tasks are done, `@auditor` reviews the integrated result; `@architect` then accepts it. Auditor FAIL/INCOMPLETE or nonpassing required checks cannot be overridden by an architect approval string.
-- Architect acceptance may identify existing `retry_tasks`; selected tasks and descendants are invalidated for bounded rework. Missing essential evidence remains blocked.
+- Architect acceptance may identify existing `retry_tasks`; selected tasks and descendants are invalidated for bounded rework, including when the audit is INCOMPLETE. An explicit architect `blocked` response prevents automatic rework. Scheduling evidence work is not acceptance: fresh auditor PASS and passing architectural acceptance remain mandatory, and automatic retries do not reset task budgets.
 
 Task states are `pending`, `ready`, `running`, `diagnosing`, `waiting_for_repair`, `review`, `done`, `blocked`, and `changes_required`. Request states are `intake`, `needs_input`, `planned`, `executing`, `reviewing`, `delivered`, `blocked`, `changes_required`, and `simulated`.
 

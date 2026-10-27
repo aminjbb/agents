@@ -4,7 +4,9 @@ RESPONSE_CONTRACTS = {
         "status": "planned | needs_input | blocked",
         "planned": "plan.tasks contains id, owner, objective, deliverable, depends_on, "
                    "write_scope, acceptance_criteria; every initial status is pending. "
-                   "Include shared accepted contracts/brief/decisions in plan metadata or response context.",
+                   "Include shared accepted contracts/brief/decisions in plan metadata or response context. "
+                   "Do not supply runtime fields such as attempts, allowances, recovery, blockers or errors; "
+                   "the coordinator owns them. Put additional descriptive task data in metadata/context.",
         "needs_input": "questions: nonempty [{id, question, optional options:[text]}]",
         "blocked": "summary: concrete missing dependency",
     },
@@ -44,7 +46,9 @@ RESPONSE_CONTRACTS = {
     "accept_delivery": {
         "status": "approved | changes_required | blocked",
         "required": "summary, evidence:[text], checks:[{name,required,status,evidence}]",
-        "retry_tasks": "Optional existing task IDs for bounded rework, never new task definitions",
+        "retry_tasks": "Optional existing task IDs for bounded rework, including evidence work after "
+                       "INCOMPLETE audit; never new task definitions or acceptance. An explicit blocked "
+                       "status prevents automatic rework. Fresh audit and acceptance must still pass.",
         "changed_files": "Must be absent or empty; acceptance is read-only",
     },
 }

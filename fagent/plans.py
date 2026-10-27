@@ -9,6 +9,11 @@ from .protocol import require
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 VALIDATOR = PACKAGE_ROOT / "skills/architect/orchestrate-feature-delivery/scripts/validate_task_plan.py"
 
+# Only declarative planning fields may cross into executable task state.
+PLANNED_TASK_FIELDS = {"id", "owner", "objective", "deliverable", "depends_on", "write_scope",
+                       "acceptance_criteria", "status", "contracts", "checks", "inputs", "outputs",
+                       "metadata", "context", "constraints", "handoff", "skills", "read_scope", "evidence"}
+
 # Architect plans sometimes use these finite config-family shorthands. Expand
 # only known families; arbitrary globs remain invalid write scopes.
 KNOWN_SCOPE_FAMILIES = {
@@ -70,8 +75,10 @@ def prepare(plan, req):
     value = deepcopy(plan)
     value["mode"] = req["mode"]
     require(isinstance(value.get("tasks"), list), "Plan must contain tasks")
-    for task in value["tasks"]:
+    for index, task in enumerate(value["tasks"]):
         require(isinstance(task, dict), "Task must be an object")
+        task = {key: item for key, item in task.items() if key in PLANNED_TASK_FIELDS}
+        value["tasks"][index] = task
         scopes = task.get("write_scope")
         require(isinstance(scopes, list), f"Write scope must be a list: {task.get('id', '?')}")
         expanded = []
@@ -89,9 +96,9 @@ def prepare(plan, req):
 
 
 def archive_task(task):
-    if task.get("result") is not None or task.get("review") is not None or task.get("error") is not None:
+    if any(task.get(key) is not None for key in ("result", "review", "error", "recovery_error")):
         task.setdefault("history", []).append(deepcopy({key: task.get(key) for key in
-            ("attempts", "status", "result", "review", "feedback", "error")}))
+            ("attempts", "status", "result", "review", "feedback", "error", "recovery_error")}))
 
 
 def reset_tasks(state, task_ids, fresh_attempt_window=False):
@@ -109,6 +116,7 @@ def reset_tasks(state, task_ids, fresh_attempt_window=False):
         selected = expanded
     for key in selected:
         archive_task(tasks[key])
+        tasks[key].pop("recovery_error", None)
         # An explicit user retry starts a fresh bounded retry window. Keep the
         # previous attempt in history, but never make an exhausted run
         # permanently unrecoverable.

@@ -111,11 +111,13 @@ class CodexAdapter:
                 if event["method"] == "turn/completed" and params.get("turn", {}).get("id") == turn_id:
                     if params["turn"].get("status") != "completed":
                         raise turn_error(params["turn"].get("error"))
-                    return response.decode(self.api_key)
+                    return response.decode(self.api_key, operation=packet.get("operation"))
         for attempt in range(3):
             try:
                 return await self._bounded(execute, root)
             except CodexOperationError as error:
-                if not error.retryable or attempt == 2:
+                # A failed writable turn may already have changed files. Only
+                # read-only operations are safe to replay at this transport layer.
+                if writable or not error.retryable or attempt == 2:
                     raise
                 await asyncio.sleep(2 ** attempt)

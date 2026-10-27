@@ -26,31 +26,32 @@ class AgentResponse:
 
     @staticmethod
     def _objects(text):
-        """Yield balanced JSON objects embedded in a short prose/Markdown response."""
-        starts = [index for index, char in enumerate(text) if char == "{"]
-        for start in starts:
-            depth, quoted, escaped = 0, False, False
-            for index in range(start, len(text)):
-                char = text[index]
-                if quoted:
-                    if escaped:
-                        escaped = False
-                    elif char == "\\":
-                        escaped = True
-                    elif char == '"':
-                        quoted = False
-                    continue
-                if char == '"':
-                    quoted = True
-                elif char == "{":
-                    depth += 1
-                elif char == "}":
-                    depth -= 1
-                    if depth == 0:
-                        yield text[start:index + 1]
-                        break
+        """Yield only top-level containers; never salvage nested checks/envelopes."""
+        start, depth, quoted, escaped = None, 0, False, False
+        for index, char in enumerate(text):
+            if start is None:
+                if char in "{[":
+                    start, depth = index, 1
+                continue
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    quoted = False
+                continue
+            if char == '"':
+                quoted = True
+            elif char in "{[":
+                depth += 1
+            elif char in "}]":
+                depth -= 1
+                if depth == 0:
+                    yield text[start:index + 1]
+                    start = None
 
-    def decode(self, api_key=None):
+    def decode(self, api_key=None, operation=None):
         if not isinstance(self.answer, str):
             raise CodexOperationError("Codex completed the turn without a final agent message.")
         if api_key and api_key in self.answer:
@@ -59,12 +60,18 @@ class AgentResponse:
         lines = text.splitlines()
         if len(lines) >= 3 and lines[0].lower() in ("```", "```json") and lines[-1] == "```":
             text = "\n".join(lines[1:-1])
-        candidates = [text, *self._objects(text)]
-        for candidate in candidates:
+        try:
+            result = json.loads(text, object_pairs_hook=unique_keys)
+        except (ValueError, UnicodeError):
+            # Permit one complete envelope surrounded by prose, but reject
+            # ambiguous objects, duplicate keys, arrays and malformed parents.
+            candidates = list(self._objects(text))
             try:
-                result = json.loads(candidate, object_pairs_hook=unique_keys)
+                result = json.loads(candidates[0], object_pairs_hook=unique_keys) if len(candidates) == 1 else None
             except (ValueError, UnicodeError):
-                continue
-            if isinstance(result, dict) and isinstance(result.get("status"), str):
-                return result
+                result = None
+        fields = ("verdict",) if operation == "review_delivery" else (
+            ("status",) if operation else ("status", "verdict"))
+        if isinstance(result, dict) and any(isinstance(result.get(key), str) for key in fields):
+            return result
         raise CodexOperationError("Codex returned an invalid JSON response. The agent output did not match the protocol.")

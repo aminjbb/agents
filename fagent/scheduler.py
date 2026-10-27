@@ -39,6 +39,12 @@ async def execute(state, gateway):
                 future = asyncio.create_task(work(task, state, gateway))
                 active[future] = (task, keys)
             if not active:
+                # Invalidation can reset a prerequisite already visited above.
+                # Rescan runnable work before declaring the schedule settled.
+                if any(task["status"] in ("pending", "ready") and
+                       all(by_id[key]["status"] == "done" for key in task["depends_on"])
+                       for task in tasks):
+                    continue
                 while True:
                     blocked = [task for task in tasks if task["status"] in ("pending", "ready") and
                                any(by_id[key]["status"] in ("blocked", "changes_required")

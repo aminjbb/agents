@@ -87,9 +87,16 @@ identify the failing stage if it recurs.
 
 Transient model-service failures (`serverOverloaded`, stream disconnects and
 upstream 5xx/network errors) are retried up to three times with short exponential
-backoff. Rate-limit data is read separately from `account/rateLimits/read`; a
+backoff only for read-only operations. Writable operations are never automatically
+replayed by the Codex adapter: a failed turn may already have changed files.
+Inspect actual side effects before any explicit retry or architect-directed repair.
+Rate-limit data is read separately from `account/rateLimits/read`; a
 nonzero usage percentage alone is not a limit failure. The UI still reports a
 limit reset or unavailable model when the service supplies that specific error.
+
+The Codex decoder uses the operation's envelope field: `verdict` for integrated
+auditor reviews and `status` for other operations. It preserves the entire response
+and rejects nested Check objects, malformed parents and ambiguous multiple envelopes.
 
 Architect responses are normalized at the coordinator boundary. In addition to
 the canonical `{ "plan": { "tasks": [...] } }` envelope, the compatible
