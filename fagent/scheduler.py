@@ -2,20 +2,27 @@
 import asyncio
 
 from .paths import conflicting, scope_keys
+from .recovery import settle_repairs
+from .repair_plan import invalidate_repair_inputs
 from .worker import work
 
 
 async def execute(state, gateway):
     tasks = state["plan"]["tasks"]
-    by_id = {task["id"]: task for task in tasks}
     active = {}
     capacity = state["request"]["max_parallel"]
     root = state["request"]["project_root"]
     try:
         while True:
-            for task in tasks:
+            settle_repairs(state, gateway)
+            by_id = {task["id"]: task for task in tasks}
+            for task in tuple(tasks):
                 if task["status"] not in ("pending", "ready"):
                     continue
+                if task.get("recovery") and not task.get("invalidation_applied"):
+                    if active:
+                        continue
+                    invalidate_repair_inputs(task, state, gateway)
                 deps = [by_id[key] for key in task["depends_on"]]
                 if any(dep["status"] in ("blocked", "changes_required") for dep in deps):
                     task.update(status="blocked", block_reason="dependency",
@@ -57,5 +64,6 @@ async def execute(state, gateway):
             task.update(status="blocked", block_reason="interrupted",
                         feedback="Execution interrupted; inspect side effects before retry")
         await asyncio.gather(*active, return_exceptions=True)
+        settle_repairs(state, gateway)
         if active:
             gateway.event("schedule_interrupted")

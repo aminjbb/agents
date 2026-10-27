@@ -1,155 +1,69 @@
-"""One bounded task transaction: execution, evidence gate, then architect review."""
+"""One execution attempt; retries and repairs must reacquire scheduler locks."""
 from .outcomes import grade, review
 from .plans import archive_task
-from .paths import scope_keys
 from .protocol import questions, require, text
-
-
-def architecture_context(state):
-    """Share architectural metadata without the stale planned task graph."""
-    def strip_tasks(value):
-        if isinstance(value, dict):
-            return {key: strip_tasks(item) for key, item in value.items() if key != "tasks"}
-        if isinstance(value, list):
-            return [strip_tasks(item) for item in value]
-        return value
-    return strip_tasks({key: value for key, value in state.get("planning", {}).items()
-                        if key not in ("status", "plan")})
-
-
-def normalize_execution_owner(task):
-    """Keep implementation and audit work with their specialist owners."""
-    if task.get("owner") != "@architect":
-        return
-    scope = task.get("write_scope", [])
-    objective = str(task.get("objective", "")).lower()
-    if any(path.startswith(("src/pages/", "src/widgets/", "src/features/",
-                            "src/entities/", "src/shared/ui/")) for path in scope):
-        task["owner"] = "@ui-crafter"
-    elif any(word in objective for word in ("audit", "review", "quality", "بازبینی", "کیفیت")):
-        task["owner"] = "@auditor"
+from .recovery import diagnose, execution_limit, verification_passed
+from .task_context import task_context
 
 
 async def work(task, state, gateway):
-    limit = state["request"]["max_attempts"]
-    normalize_execution_owner(task)
-    while state.get("unlimited_attempts") or task["attempts"] < limit:
-        archive_task(task)
-        task.update(status="running", attempts=task["attempts"] + 1, error=None, result=None, review=None)
-        gateway.event("task_running", task_id=task["id"], attempt=task["attempts"])
-        try:
-            prerequisites = {item["id"]: item["result"] for item in state["plan"]["tasks"]
-                             if item["id"] in task["depends_on"]}
-            prerequisite_states = {item["id"]: {
-                "status": item["status"],
-                "attempts": item["attempts"],
-                "block_reason": item.get("block_reason")
-            } for item in state["plan"]["tasks"] if item["id"] in task["depends_on"]}
-            result = await gateway.invoke(task["owner"], "execute_task",
-                                          {"task": task, "prerequisite_results": prerequisites,
-                                           "prerequisite_states": prerequisite_states,
-                                           "architecture_context": architecture_context(state),
-                                           "plan_contracts": {key: value for key, value in
-                                               state["plan"].items() if key != "tasks"}},
-                                          task["write_scope"])
-            task["result"] = result
-            status = result.get("status")
-            require(status in ("completed", "needs_input", "blocked"), "Invalid task response status")
-            if status != "completed":
-                task.update(status="blocked", feedback=text(result.get("summary"), "summary"))
-                task["block_reason"] = status
-                if status == "needs_input":
-                    if not result.get("changed_files"):
-                        task["attempts"] -= 1
-                    task["questions"] = [{**item, "id": task["id"] + "." + item["id"],
-                                          "task_id": task["id"]}
-                                         for item in questions(result.get("questions"))]
-                decision = await rework_decision(task, state, gateway, result)
-                if decision:
-                    continue
-                gateway.event("task_blocked", task_id=task["id"], reason=status)
-                return
-            require("changed_files" in result, "Completed tasks must report changed_files")
-            # Static implementation evidence can proceed when runtime browser
-            # coverage is unavailable; final review/audit still requires it.
-            quality = grade(result, allow_inconclusive=True)
-            if quality != "PASS":
-                task.update(status="changes_required" if quality == "FAIL" else "blocked",
-                            feedback="Required execution checks did not pass", block_reason="checks")
-                decision = await rework_decision(task, state, gateway, result)
-                if decision:
-                    continue
+    if task["attempts"] >= execution_limit(task, state):
+        task.update(status="blocked", block_reason="attempt_limit",
+                    feedback="Attempt limit reached; inspect evidence before explicit retry")
+        gateway.event("task_attempt_limit", task_id=task["id"])
+        return
+    archive_task(task)
+    task.update(status="running", attempts=task["attempts"] + 1, error=None, result=None, review=None)
+    gateway.event("task_running", task_id=task["id"], attempt=task["attempts"])
+    try:
+        context = task_context(task, state)
+        dependencies = [item for item in state["plan"]["tasks"] if item["id"] in task["depends_on"]]
+        context.update(prerequisite_results={item["id"]: item["result"] for item in dependencies},
+                       prerequisite_states={item["id"]: {key: item.get(key) for key in
+                           ("status", "attempts", "block_reason")} for item in dependencies})
+        result = await gateway.invoke(task["owner"], "execute_task", context, task["write_scope"])
+        task["result"] = result
+        status = result.get("status")
+        require(status in ("completed", "needs_input", "blocked"), "Invalid task response status")
+        if status != "completed":
+            task.update(status="blocked", feedback=text(result.get("summary"), "summary"), block_reason=status)
+            if status == "needs_input":
+                if not result.get("changed_files"):
+                    task["attempts"] -= 1
+                task["questions"] = [{**item, "id": task["id"] + "." + item["id"], "task_id": task["id"]}
+                                     for item in questions(result.get("questions"))]
             else:
-                task["status"] = "review"
-                gateway.event("task_review", task_id=task["id"])
-                decision = await gateway.invoke("@architect", "review_task", {
-                    "task": task, "plan_contracts": {key: value for key, value in
-                        state["plan"].items() if key != "tasks"},
-                    "architecture_context": architecture_context(state)})
-                if apply_rework(task, state, gateway, decision):
-                    continue
-                task.update(review=decision, status=review(decision), feedback=decision["summary"])
-            gateway.event("task_result", task_id=task["id"], status=task["status"])
-            if task["status"] != "changes_required":
-                return
-        except Exception as error:
-            task.update(status="blocked", block_reason="execution_error", error=str(error))
-            gateway.event("task_error", task_id=task["id"], reason=str(error))
+                await diagnose(task, state, gateway, result)
+            gateway.event("task_blocked", task_id=task["id"], reason=status)
             return
-    task["feedback"] = task.get("feedback", "") + " (attempt limit reached)"
-    gateway.event("task_attempt_limit", task_id=task["id"])
-
-
-def apply_rework(task, state, gateway, decision):
-    change = decision.get("rework") if isinstance(decision, dict) else None
-    if not isinstance(change, dict):
-        return False
-    owner = change.get("owner", task["owner"])
-    scope = change.get("write_scope", task["write_scope"])
-    require(owner in gateway.registry.agents, "Rework owner unavailable")
-    require(isinstance(scope, list), "Rework write_scope must be a list")
-    scope_keys(state["request"]["project_root"], scope)
-    if "objective" in change:
-        text(change["objective"], "rework objective")
-        task["objective"] = change["objective"]
-    if "acceptance_criteria" in change:
-        require(isinstance(change["acceptance_criteria"], list) and change["acceptance_criteria"],
-                "Rework acceptance_criteria must be nonempty")
-        task["acceptance_criteria"] = change["acceptance_criteria"]
-    task.update(owner=owner, write_scope=scope, status="changes_required",
-                feedback=text(decision.get("summary"), "summary"), result=None,
-                review=None, questions=[])
-    gateway.event("task_reassigned", task_id=task["id"], owner=owner, write_scope=scope)
-    return True
-
-
-def fallback_rework(task, state, gateway, failure):
-    """Assign a bounded specialist fallback when Tech Lead omits rework."""
-    text_blob = str(failure).lower()
-    if any(word in text_blob for word in ("browser", "viewport", "keyboard", "accessibility")):
-        owner, scope = "@auditor", []
-    elif any(word in text_blob for word in ("integration", "app.tsx", "assembly", "route")):
-        owner, scope = "@navigator", list(dict.fromkeys(task["write_scope"] + ["src/App.tsx"]))
-    elif any(word in text_blob for word in ("source of truth", "canonical", "entities/product")):
-        owner, scope = "@ui-crafter", list(dict.fromkeys(task["write_scope"] +
-                                                        ["src/pages/", "src/widgets/"]))
-    else:
-        return False
-    if owner == task["owner"] and scope == task["write_scope"]:
-        return False
-    scope_keys(state["request"]["project_root"], scope)
-    task.update(owner=owner, write_scope=scope, status="changes_required",
-                feedback="Tech Lead fallback assignment: " + text(failure.get("summary"), "summary"),
-                result=None, review=None, questions=[])
-    gateway.event("task_reassigned_fallback", task_id=task["id"], owner=owner, write_scope=scope)
-    return True
-
-
-async def rework_decision(task, state, gateway, failure):
-    decision = await gateway.invoke("@architect", "review_task", {
-        "task": task,
-        "failure": failure,
-        "rework_request": "If the failure needs another owner or write scope, return rework with the exact authorized changes.",
-        "plan_contracts": {key: value for key, value in state["plan"].items() if key != "tasks"},
-        "architecture_context": architecture_context(state)})
-    return apply_rework(task, state, gateway, decision) or fallback_rework(task, state, gateway, failure)
+        require("changed_files" in result, "Completed tasks must report changed_files")
+        if grade(result) != "PASS" or not verification_passed(task, result):
+            task.update(status="blocked", feedback="Required execution/repair checks did not pass",
+                        block_reason="checks")
+            await diagnose(task, state, gateway, result)
+            return
+        task["status"] = "review"
+        gateway.event("task_review", task_id=task["id"])
+        context = task_context(task, state)
+        if task.get("recovery"):
+            context["recovery_verification"] = task["recovery"]["verification"]
+            gateway.event("repair_verifying", task_id=task["id"], parent_id=task["recovery"]["parent_id"])
+        decision = await gateway.invoke("@architect", "review_task", context)
+        task.update(review=decision, status=review(decision), feedback=decision["summary"])
+        if task.get("recovery") and not verification_passed(task, decision):
+            task.update(status="blocked", block_reason="repair_verification",
+                        feedback="Reviewer did not confirm the original reproduction checks")
+        if task["status"] != "done" and (decision.get("rework") or task["status"] == "blocked"):
+            await diagnose(task, state, gateway, decision, decision=decision)
+        elif task["status"] == "changes_required":
+            task["status"] = "pending"
+        gateway.event("task_result", task_id=task["id"], status=task["status"])
+    except Exception as error:
+        task.update(status="blocked", block_reason="execution_error", error=str(error), feedback=str(error))
+        gateway.event("task_error", task_id=task["id"], reason=str(error))
+        if not task.get("diagnosis_in_progress"):
+            try:
+                await diagnose(task, state, gateway, {"summary": str(error), "category": "execution_error"})
+            except Exception as diagnosis_error:
+                task["recovery_error"] = str(diagnosis_error)
+                gateway.event("recovery_stuck", task_id=task["id"], reason=str(diagnosis_error))

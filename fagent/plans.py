@@ -89,7 +89,7 @@ def prepare(plan, req):
 
 
 def archive_task(task):
-    if task.get("result") is not None or task.get("review") is not None:
+    if task.get("result") is not None or task.get("review") is not None or task.get("error") is not None:
         task.setdefault("history", []).append(deepcopy({key: task.get(key) for key in
             ("attempts", "status", "result", "review", "feedback", "error")}))
 
@@ -100,8 +100,10 @@ def reset_tasks(state, task_ids, fresh_attempt_window=False):
     require(bool(task_ids) and all(key in tasks for key in task_ids), "Unknown/empty retry tasks")
     selected = set(task_ids)
     while True:
-        expanded = selected | {key for key, task in tasks.items()
-                               if selected.intersection(task["depends_on"])}
+        repairs = {dep for key in selected for dep in tasks[key]["depends_on"]
+                   if tasks[dep].get("recovery") and tasks[dep]["status"] != "done"}
+        expanded = selected | repairs | {key for key, task in tasks.items()
+                                         if selected.intersection(task["depends_on"])}
         if expanded == selected:
             break
         selected = expanded
@@ -110,9 +112,18 @@ def reset_tasks(state, task_ids, fresh_attempt_window=False):
         # An explicit user retry starts a fresh bounded retry window. Keep the
         # previous attempt in history, but never make an exhausted run
         # permanently unrecoverable.
-        tasks[key].update(status="pending", result=None, review=None, questions=[])
+        tasks[key].update(status="pending", result=None, review=None, questions=[], error=None, block_reason=None)
+        if tasks[key].get("recovery"):
+            tasks[key]["invalidation_applied"] = False
         if fresh_attempt_window:
             tasks[key]["attempts"] = 0
+            tasks[key]["recovery_epoch"] = tasks[key].get("recovery_epoch", 0) + 1
+            tasks[key]["resume_allowance"] = 0
+            tasks[key]["revalidation_allowance"] = 0
+    for key in selected:
+        repair_id = tasks[key].get("active_repair")
+        if repair_id in selected:
+            tasks[key]["status"] = "waiting_for_repair"
     if "audit" in state or "acceptance" in state:
         state.setdefault("delivery_history", []).append(deepcopy(
             {"audit": state.pop("audit", None), "acceptance": state.pop("acceptance", None)}))

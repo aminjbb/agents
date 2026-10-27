@@ -21,7 +21,7 @@ class Orchestrator:
         self.state = state
         self.gateway = Gateway(self.adapter, self.registry, state, self.store.save)
         state["simulation"] = state.get("simulation", False) or self.adapter.simulation
-        state["unlimited_attempts"] = self.unlimited_attempts
+        state["unlimited_attempts"] = False  # Retained field; all automatic retries are bounded.
 
     async def start(self, data):
         state = {"protocol_version": "1.0", "request": request(data), "status": "intake",
@@ -105,9 +105,10 @@ class Orchestrator:
 
     async def execute_plan(self):
         state, gateway = self.state, self.gateway
-        rounds = None if self.unlimited_attempts else state["request"]["max_attempts"] + 1
+        # Legacy constructor flag must never bypass recovery/delivery budgets.
+        rounds = state["request"]["max_attempts"] + 1
         round_number = 0
-        while rounds is None or round_number < rounds:
+        while round_number < rounds:
             round_number += 1
             state["status"] = "executing"
             gateway.event("execution_started")

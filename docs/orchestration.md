@@ -37,11 +37,12 @@ python -m fagent status --state .fagent/runs/product.json
 
 Use `status --full` to inspect the plan, task results/reviews, check evidence, audit/acceptance, and ordered timestamped events. Run files contain the request, answers, and agent-reported evidence; store them appropriately. Default CLI summaries do not print complete prompts or adapter arguments.
 
-When an execution or review check fails, the coordinator sends the failure
-evidence back to `@architect`. Architect may return a bounded `rework` object
-with a new owner and exact write scope; the task is then reassigned and retried
-with the failure attached to its context. Without an explicit rework assignment,
-the task remains blocked and its dependents do not run.
+When execution or review fails, the coordinator sends the evidence to `@architect`.
+A bounded `rework` proposal now creates a separate repair task with exact scope,
+reproduction and named verification checks. It preserves the original assignment,
+reacquires scheduler locks and resumes the original specialist only after the
+repair passes execution and read-only review. See the [recovery contract](recovery.md)
+for budgets, repeated-failure detection, external blockers and response examples.
 
 ## Clarification and resuming
 
@@ -67,7 +68,7 @@ To explicitly retry a blocked/interrupted task after inspecting its side effects
 python -m fagent resume --state .fagent/runs/product.json --adapter-config D:/tools/adapter.json --retry API
 ```
 
-The selected task and all dependent consumers lose active results/approvals and return to pending. Prior attempts/reviews are retained in each task's history, and previous integrated audit/acceptance results in delivery_history. Independent completed work is retained. Exhausted task attempts block further retry rather than loop indefinitely. Changed architecture/new tasks require a new architect-planned request in this first version; the runtime does not silently replace a running graph.
+The selected task, its incomplete repair prerequisites and dependent consumers lose active results/approvals and return to pending in a fresh bounded retry window. Prior attempts/reviews remain in task history, previous blockers remain in blocker history, and integrated review remains in delivery_history. Independent completed work is retained. Architectural scope changes still require architect planning; the runtime only adds validated repair dependencies through its recovery contract.
 
 ## Scheduling and review
 
@@ -82,7 +83,7 @@ The selected task and all dependent consumers lose active results/approvals and 
 - After all tasks are done, `@auditor` reviews the integrated result; `@architect` then accepts it. Auditor FAIL/INCOMPLETE or nonpassing required checks cannot be overridden by an architect approval string.
 - Architect acceptance may identify existing `retry_tasks`; selected tasks and descendants are invalidated for bounded rework. Missing essential evidence remains blocked.
 
-Task states are `pending`, `ready`, `running`, `review`, `done`, `blocked`, and `changes_required`. Request states are `intake`, `needs_input`, `planned`, `executing`, `reviewing`, `delivered`, `blocked`, `changes_required`, and `simulated`.
+Task states are `pending`, `ready`, `running`, `diagnosing`, `waiting_for_repair`, `review`, `done`, `blocked`, and `changes_required`. Request states are `intake`, `needs_input`, `planned`, `executing`, `reviewing`, `delivered`, `blocked`, `changes_required`, and `simulated`.
 
 An adapter declaring simulation, or any response declaring simulation, permanently marks that run as simulated. Successful simulated execution ends at `simulated`, never `delivered`. Real mode still relies on the bridge's truthful evidence and tool enforcement; JSON validation alone cannot verify a claimed test result.
 
@@ -161,7 +162,7 @@ The runtime rechecks resolved declared scopes and rejects paths escaping the tar
 
 If a process crashes, a lock may remain. Inspect the recorded PID/process and actual side effects before manually removing a stale lock. Resume does not replay running tasks automatically; use explicit retry after inspection. Cancellation persists interrupted tasks as blocked when cleanup can run. Interrupted subprocess descendants require host cleanup; do not remove locks while they still operate.
 
-The coordinator uses a fixed task graph with bounded retries. The separate [control room](control-room.md) provides visual intake, task tracking and a Codex adapter. Distributed scheduling, automatic conflict resolution, release/merge automation and interception of arbitrary IDE messages remain outside this runtime.
+The coordinator uses an architect-planned graph with validated repair dependencies and bounded retries. The separate [control room](control-room.md) provides visual intake, task/repair tracking and a Codex adapter. Distributed scheduling, automatic conflict resolution, release/merge automation and interception of arbitrary IDE messages remain outside this runtime.
 
 ## Verification
 

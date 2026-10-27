@@ -13,12 +13,27 @@ RESPONSE_CONTRACTS = {
         "completed": "summary, evidence:[text], changed_files:[project-relative paths], "
                      "checks:[{name,required:boolean,status,evidence}]",
         "needs_input": "summary and questions:[{id,question,optional options}]",
-        "blocked": "summary: concrete blocker; changed_files if partial writes occurred",
+        "blocked": "summary: concrete blocker; changed_files if partial writes occurred. "
+                   "Include blocker:{category,code,reproduce} and checks with stable names when known. "
+                   "Distinguish implementation/contract from tool/access/provider/external blockers.",
     },
     "review_task": {
         "status": "approved | changes_required | blocked",
         "required": "summary, evidence:[text], checks:[{name,required,status,evidence}]",
-        "rework": "Required when a task is blocked or checks fail and another agent can fix it: {owner, write_scope, objective, acceptance_criteria}; omit only for an explicitly unresolvable external blocker",
+        "rework": "Optional separate repair: {owner,write_scope,objective,acceptance_criteria,"
+                  "verification:{reproduce,checks:[exact required check names]},optional depends_on:[existing IDs]}. "
+                  "Diagnose the actual cause/capability, not keywords. Never replace the original objective. "
+                  "Include all original failing check names. The coordinator schedules and locks the repair. "
+                  "No recursive repair of repairs or repeated unchanged failure; report the real blocker instead.",
+        "verification": "When context.recovery_verification is present, independently inspect/reproduce "
+                        "the blocker read-only; confirm every specified check by exact name as required PASS "
+                        "only with actual host/tool evidence. Missing tools or INCONCLUSIVE cannot pass.",
+        "questions": "Optional [{id,question,optional options}] for essential external/user decisions; "
+                     "never silently replace pending questions with a repair.",
+        "retry_strategy": "Optional nonempty concrete different corrective action within this task's "
+                          "existing owner/scope/acceptance. No blind retry. Repair tasks may use this "
+                          "within their attempt budget; they cannot create nested repairs. "
+                          "An unchanged repeated blocker stops automatic retries.",
         "changed_files": "Must be absent or empty; review is read-only",
     },
     "review_delivery": {

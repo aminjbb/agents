@@ -37,6 +37,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def dispatch(self):
+        self.body_consumed = False
         try:
             port = self.server.server_port
             hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
@@ -55,13 +56,35 @@ class Handler(BaseHTTPRequestHandler):
                 length = int(self.headers.get("Content-Length", "0"))
                 require(0 <= length <= 65536, "Request body exceeds 64 KiB")
                 raw = self.rfile.read(length)
+                self.body_consumed = True
                 data = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_keys) if raw else {}
                 require(isinstance(data, dict), "JSON body must be an object")
             self.send(200, route(self.server.jobs, self.command, path, data))
         except ProtocolError as error:
+            self.drain_rejected_body()
             self.send(400, {"error": str(error)})
         except (ValueError, KeyError, OSError, TypeError):
+            self.drain_rejected_body()
             self.send(400, {"error": "Request failed. Check input, connection and run status."})
+
+    def drain_rejected_body(self):
+        """Avoid a Windows TCP reset hiding a rejection with an unread body.
+
+        Discard only a bounded amount, without parsing it or waiting indefinitely.
+        HTTP/1.0 closes this connection after the response; no request is replayed.
+        """
+        if self.body_consumed:
+            return
+        timeout = self.connection.gettimeout()
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            self.connection.settimeout(0.25)
+            if length > 0:
+                self.rfile.read(min(length, 65537))
+        except (OSError, ValueError):
+            pass
+        finally:
+            self.connection.settimeout(timeout)
 
     def static_file(self, path):
         root = self.server.static

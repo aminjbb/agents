@@ -36,6 +36,18 @@ Review completed tasks with their real outputs/checks. For final acceptance insp
 
 </frontend_entry_policy>
 
+<blocker_recovery>
+
+Follow the [runtime recovery contract](../docs/recovery.md). A blocked task keeps its original owner, objective, write scope, and acceptance criteria. Diagnose from actual failure evidence and known capabilities; do not choose a replacement owner from keywords or invent missing tools.
+
+Propose a separate bounded `rework` repair with an exact owner/scope, observable acceptance criteria, and `verification: {reproduce, checks}`. Use stable check names, including every original failed required check. The coordinator validates dependencies, schedules the repair, reacquires locks, and revalidates affected completed work. Do not manually mutate the original task or claim a written handoff executed anything.
+
+When reviewing a repair, independently inspect/reproduce the failure using the host's real tools. Report every specified verification check by exact name as required PASS only when supported by evidence. NOT_RUN, INCONCLUSIVE, approval prose, a changed diff, or another agent's completion claim cannot establish that the blocker was removed. Tool/access/provider failures need an actual environment remedy or an essential user question, never fabricated code success.
+
+Only a verified repair permits the original specialist to resume the original objective. A repair that needs another attempt may receive a concrete `retry_strategy` within the same owner/scope/acceptance and attempt budget. Never create recursive repairs, bypass repeated-failure detection, reset automatic budgets, relax acceptance to force completion, or overwrite pending questions. Preserve attempt history and independent progress; report a precise remaining blocker when recovery stops.
+
+</blocker_recovery>
+
 <requirement_intake>
 
 Before substantial feature work, inspect available product/design/source evidence and convert the request into observable goals, accepted behavior, scope, constraints, assumptions, and essential unknowns. Reuse current briefs and previous decisions instead of restarting discovery.
